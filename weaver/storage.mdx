@@ -1,0 +1,73 @@
+---
+title: "Storage"
+description: "Enclave artifacts and forensic scrying"
+---
+
+> Version: V666.TOTAL_PARITY
+> Jurisdiction: Cognitive Plane (Artifacts)
+> Protocol: Verdigris Palingenesis V12.0
+
+The Storage service allows you to manage project artifacts—images, PDFs, and binary logic filaments. Using the Storage service, you can upload, view, download, and query all project files within isolated sandboxes.
+
+## 1. Buckets (Silos)
+
+Files are managed using buckets. Storage buckets are similar to Tables in the Databases service but are optimized for binary large objects (BLOBs).
+
+- **Encryption**: Automatic server-side encryption for sensitive artifacts.
+- **Antivirus**: Scans for malicious signatures during ingestion (skips files > 20MB).
+- **Compression**: Optimized delivery over the mesh using gzip or zstd.
+
+### 1.1 Manifesting a Bucket
+
+```python
+from appwrite.services.storage import Storage
+
+storage = Storage(client)
+
+result = storage.create_bucket(
+    bucket_id = 'SANDBOX_FILES',
+    name = 'AgentFS Artifact Silo',
+    encryption = True,
+    antivirus = True
+)
+```
+
+## 2. Artifact Lifecycle
+
+### 2.1 Ingestion (Upload)
+
+Larger files should be uploaded using multiple requests with the `content-range` header (max 5MB chunks). Appwrite SDKs manage this chunking logic internally.
+
+```python
+result = storage.create_file(
+    bucket_id = 'SANDBOX_FILES',
+    file_id = ID.unique(),
+    file = InputFile.from_path('dna_blueprint.py')
+)
+```
+
+### 2.2 Forensic Scrying (Previews)
+
+The preview endpoint allows you to generate and manipulate images for HUD display. Preview is supported for image files < 10MB.
+
+```python
+result = storage.get_file_preview(
+    bucket_id = 'SANDBOX_FILES',
+    file_id = '<FILE_ID>',
+    width = 400,
+    height = 400,
+    quality = 80,
+    output = 'webp'
+)
+```
+
+## 3. Permissions & Security
+
+Assign read or write access to each bucket or file using the Appwrite permissions architecture.
+
+- **File Security**: Enables configuring permissions for individual files within a bucket.
+- **Bucket Security**: Global permissions inherited by all files unless overridden.
+
+---
+
+_STATUS: ARTIFACT JURISDICTION RATIFIED. COGNITIVE PLANE SECURED._

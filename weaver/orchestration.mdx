@@ -1,0 +1,59 @@
+---
+title: "Orchestration"
+description: "Bespoke swarm and weave endpoint"
+---
+
+The `/api/v1/orchestration/weave` endpoint runs the in-repo **bespoke sequential council** by default (`BEEP` → specialists → `BEEP`). It does not require CrewAI at process startup.
+
+## Environment
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NEXUS_ENABLE_ORCHESTRATION` | `true` | Set to `false` to skip mounting `/orchestration` |
+| `NEXUS_ORCHESTRATOR` | `bespoke` | `crewai` forces legacy `SwarmFlow` only |
+| `NEXUS_BESPOKE_FALLBACK_CREWAI` | `false` | On bespoke failure, retry with CrewAI |
+| `NEXUS_LLM_PROVIDER` | `gemini` | `gemini`, `groq`, or `anthropic` |
+| `GEMINI_API_KEY` | — | Required when provider is `gemini` |
+| `GROQ_API_KEY` | — | Required when provider is `groq` |
+| `ANTHROPIC_API_KEY` | — | Required when provider is `anthropic` |
+
+Weave-generated dev env: [`.dev/runtime.env`](../.dev/runtime.env).
+
+## Request
+
+```http
+POST /api/v1/orchestration/weave
+Content-Type: application/json
+
+{
+  "spec": "Research competitor pricing for X",
+  "thread_id": "weave-demo-1",
+  "swarm_type": "research"
+}
+```
+
+`swarm_type` hints: `research`, `materialization`, `audit`, `general` / `conversational`.
+
+## Response
+
+`status: CONVERGED` with `feeds` (message list), `phi_alignment`, `performance_metrics`, and `_metadata` (plan, timeline, risk).
+
+Blocked intents return `status: BLOCKED` from AEGIS before the swarm runs.
+
+## AI Debug Assistant
+
+From the canvas **Debug Interface** (Signal Chronicle bottom blade):
+
+1. Open **Chronicle** — errors show stack previews when available.
+2. Tap an error row or **Analyze latest error** → switches to **AI Debug**.
+3. Optional focus question, then **Analyze** → `POST /api/v1/developer/debug-assist`.
+
+Returns structured `rootCause`, `explanation`, `confidence`, and `fixes[]` via the cognitive kernel (same providers as bespoke swarm).
+
+## Implementation map
+
+- HTTP: [`nexus/controllers/orchestration.py`](../nexus/controllers/orchestration.py)
+- Router: [`nexus/engine/orchestrator.py`](../nexus/engine/orchestrator.py)
+- Council: [`nexus/engine/bespoke_swarm.py`](../nexus/engine/bespoke_swarm.py)
+- LLM: [`nexus/engine/cognitive_kernel.py`](../nexus/engine/cognitive_kernel.py)
+- AgentFS session: [`nexus/engine/swarm.py`](../nexus/engine/swarm.py)

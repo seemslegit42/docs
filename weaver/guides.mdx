@@ -1,0 +1,47 @@
+---
+title: "Guides"
+description: "Operational guides index"
+---
+
+> Protocol: Verdigris Palingenesis V12.0
+> Source: Syndicate Specifications
+
+## 1. Start with Python (Server SDK)
+
+The administrative plane of ΛΞVOS utilize the `appwrite` (Python) SDK for high-privileged rituals.
+
+```python
+from appwrite.client import Client
+from appwrite.services.storage import Storage
+
+client = Client()
+client.set_endpoint('https://tor.cloud.appwrite.io/v1')
+client.set_project('<PROJECT_ID>')
+client.set_key('<YOUR_API_KEY>')
+
+storage = Storage(client)
+```
+
+## 2. Storage Buckets Management
+
+Storage buckets are a group of files, similar to tables in Appwrite Databases. Buckets let you limit file size and extensions, encrypt files, and more.
+
+**Python Manifestation:**
+
+```python
+result = storage.create_bucket('<BUCKET_ID>', '<NAME>')
+```
+
+## 3. Authoritative Error Handling
+
+**Core Principle:** Avoid returning Appwrite's raw error messages directly to users. Catch errors, identify the type, and return a user-friendly message.
+
+| Error Type                 | Technical Meaning        | User-Friendly Message                                                  |
+| -------------------------- | ------------------------ | ---------------------------------------------------------------------- |
+| `user_invalid_credentials` | Invalid credentials.     | "The email or password you entered is incorrect. Please try again."    |
+| `user_blocked`             | User has been blocked.   | "Your account has been temporarily suspended. Please contact support." |
+| `storage_file_not_found`   | File could not be found. | "The file you requested is not available."                             |
+
+---
+
+_Φ_VALIDATED: Documentation parity achieved._

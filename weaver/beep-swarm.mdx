@@ -1,0 +1,70 @@
+---
+title: "BEEP Swarm"
+description: "Tri-agentic mind and bespoke swarm pattern"
+---
+
+> Version: 1.0.0 (Zenith V263)
+> Domain: Cognitive Orchestration
+> Protocol: Verdigris Palingenesis V12.0
+
+## 1. The Tri-Agentic Mind
+
+The BEEP Swarm is a specialized implementation of the **LangGraph Swarm** pattern, decoupling reasoning into three specialized nodes to prevent context pollution and ensure deterministic execution via **CrewAI** specialists.
+
+### 1.1 BEEP (The Oracle)
+
+- **Focus**: Conversational Scaffolding & Intent Ingestion.
+- **Role**: Interprets unstructured "Decrees" and translates them into a persistent logical plan.
+- **Harness**: Enforces recursive planning via the `write_todos` tool.
+
+### 1.2 Weaver (The Architect)
+
+- **Focus**: Logical Construction & Tooling.
+- **Role**: Executes the technical sequences defined in the plan (code generation, graph compilation).
+- **Substrate**: Directly manipulates the Loom Studio's logic leylines and AgentFS artifacts.
+
+### 1.3 Aegis (The Guardian)
+
+- **Focus**: Constitutional Governance & Adjudication.
+- **Intercept**: High-risk tool calls (risk: high) are automatically rerouted to Aegis via conditional graph edges.
+- **Adjudication**: Validates intent against the Chimera Constitution.
+
+## 2. Deep Agent Harness (DNA)
+
+Unlike "shallow" agents, units in the Weaver Studio utilize a persistent harness that provides a "Medium-Term Memory" layer anchored to the **AgentFS SDK**.
+
+### 2.1 Planning Middleware
+
+Units are forced to use `write_todos` to manifest their plan to the `agent_execution_configs` table. This offloads executive function from volatile model RAM to a persistent disk state, preventing "AI amnesia."
+
+### 2.2 Context Isolation
+
+- **Sub-Agent Spawning**: Complex tasks trigger the spawning of ephemeral sub-agents with fresh context windows.
+- **Eviction Policy**: Large tool outputs are written to AgentFS and replaced with reference pointers in the active context window.
+
+## 3. Orchestration Topology
+
+The Swarm pattern enables decentralized, low-latency collaboration between units.
+
+### 3.1 Command-Based Handoffs
+
+Using LangGraph's `Command` primitive, agents transfer control atomically:
+
+```python
+# BEEP hands off to Weaver
+return Command(
+    goto="weaver",
+    update={"active_agent": "WEAVER", "context_summary": "..."}
+)
+```
+
+### 3.2 The Aegis Interceptor
+
+Implemented as a conditional edge in the Graph topology:
+
+- If `tool_call.risk == 'high'`, route to `AEGIS_NODE`.
+- Else, route to `TOOL_EXECUTION_NODE`.
+
+---
+
+_Φ_VALIDATED: Swarm pattern ratified._

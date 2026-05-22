@@ -1,0 +1,50 @@
+---
+title: "Next.js"
+description: "Frontend stack and patterns"
+---
+
+> Source: Next.js 15 App Router Specification
+
+Next.js uses **file-system based routing**, meaning folders define routes and files define the UI.
+
+## 1. Creating a Page
+
+A **page** is UI rendered on a specific route. To create one, add a `page.tsx` file inside a route segment.
+
+```tsx
+// app/canvas/page.tsx
+export default function Page() {
+    return <h1>Interactive Loom</h1>;
+}
+```
+
+## 2. Creating a Layout
+
+A **layout** is UI shared between multiple pages. It preserves state and remains interactive on navigation.
+
+```tsx
+// app/layout.tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+    return (
+        <html lang='en'>
+            <body>{children}</body>
+        </html>
+    );
+}
+```
+
+## 3. Dynamic Segments
+
+Wrap a folder name in square brackets to create a dynamic route (e.g., `[slug]`).
+
+```tsx
+// app/blog/[slug]/page.tsx
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params;
+    return <h1>Viewing: {slug}</h1>;
+}
+```
+
+---
+
+_STATUS: FRONTEND SUBSTRATE DOCUMENTED._

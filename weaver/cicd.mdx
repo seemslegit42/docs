@@ -1,0 +1,98 @@
+---
+title: "CI/CD"
+description: "GitHub Actions, deploy, rollback"
+---
+
+Automated build, test, security scan, deploy, and rollback for all Weaver modules.
+
+## Pipelines
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| [`.github/workflows/ci.yml`](../.github/workflows/ci.yml) | PR + push `main`/`dev` | Lint, unit tests, integration tests, security, image build |
+| [`.github/workflows/cd.yml`](../.github/workflows/cd.yml) | Push `main`/`dev`, manual | Build/push GHCR images, deploy, auto-rollback on failure |
+| [`.github/workflows/rollback.yml`](../.github/workflows/rollback.yml) | Manual | Roll back staging or production to previous tag |
+
+## CI stages
+
+1. **Python lint** — Ruff on engine, controllers, services, targeted tests
+2. **Frontend** — `bun install`, production build (typecheck gate)
+3. **Unit tests** — Nexus `engine` + `services`, frontend `src/utils/__tests__`
+4. **Integration** — `test_weaver_api.py` (in-process) + Docker Compose CI smoke
+5. **Security** — `pip-audit`, `bandit`, `bun audit`, Trivy FS scan
+6. **Build images** — frontend, Nexus API (verify Dockerfiles)
+
+## CD & environments
+
+| Branch | Environment | Image tag |
+|--------|-------------|-----------|
+| `dev` | `staging` | `staging-<sha>` |
+| `main` | `production` | `production-<sha>` + `latest` on production |
+
+Images are published to:
+
+```text
+ghcr.io/<owner>/<repo>-frontend:<tag>
+ghcr.io/<owner>/<repo>-nexus-api:<tag>
+ghcr.io/<owner>/<repo>-celery:<tag>
+```
+
+## Deploy secrets (GitHub)
+
+Configure in repo **Settings → Secrets and variables → Actions**:
+
+| Secret | Required | Description |
+|--------|----------|-------------|
+| `DEPLOY_HOST` | For remote deploy | SSH hostname |
+| `DEPLOY_USER` | For remote deploy | SSH user |
+| `DEPLOY_SSH_KEY` | For remote deploy | Private key (PEM) |
+
+Without `DEPLOY_HOST`, CD still **builds and pushes images**; deploy is registry-only.
+
+On the deploy host:
+
+```bash
+mkdir -p ~/weaver-deploy
+# copy docker-compose.deploy.yml + scripts/ci/*.sh
+export REGISTRY=ghcr.io/owner/repo
+export IMAGE_TAG=production-abc1234
+./deploy.sh
+```
+
+## Rollback
+
+**Automatic:** CD `rollback-on-failure` job runs if deploy fails (re-tags `rollback` images).
+
+**Manual:** Actions → **Rollback — Weaver Platform** → pick environment.
+
+Local:
+
+```bash
+./scripts/ci/rollback.sh
+```
+
+State is stored in `.deploy/state.json` (artifact in CI).
+
+## Local CI commands
+
+```bash
+make ci-unit          # unit tests only
+make ci-integration   # integration + compose smoke
+make ci-security      # security-scan.sh
+```
+
+## Compose files
+
+| File | Use |
+|------|-----|
+| `docker-compose.ci.yml` | CI integration (Dragonfly + Nexus CI image) |
+| `docker-compose.deploy.yml` | Staging/production deploy |
+| `docker-compose.trinity.yml` | Local dev (Dragonfly, Celery) |
+
+## Module map
+
+| Module | Dockerfile | Health |
+|--------|------------|--------|
+| Frontend (Next.js) | `Dockerfile` | `:3000` |
+| Nexus API | `nexus/Dockerfile.release` | `/health` |
+| Celery worker | `nexus/Dockerfile` | Redis broker |

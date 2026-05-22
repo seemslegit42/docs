@@ -1,0 +1,57 @@
+---
+title: "Type generation"
+description: "Schema calibration and type safety"
+---
+
+> Version: V666.TOTAL_PARITY
+> Jurisdiction: Tooling & Parity
+> Protocol: Verdigris Palingenesis V12.0
+
+To ensure absolute type safety and prevent causal fragmentation, **ΛΞVON OS** utilizes the Appwrite CLI to generate model definitions directly from your database schema.
+
+## 1. Pulling the Substrate
+
+First, synchronize your local environment with the cloud bedrock:
+
+```bash
+appwrite pull tables
+```
+
+## 2. Generating Types
+
+Execute the manifestation ritual to generate language-specific models:
+
+```bash
+appwrite types --language ts ./src/types
+```
+
+| Option       | Description                                                                    |
+| ------------ | ------------------------------------------------------------------------------ |
+| `--language` | Targets `ts`, `js`, `php`, `kotlin`, `swift`, `java`, or `dart`.               |
+| `--strict`   | Enforces language conventions over schema naming (e.g., camelCase conversion). |
+
+## 3. Implementation Example (TypeScript)
+
+The generated types inherit from `Models.Row`, ensuring all metadata sigils (`$id`, `$createdAt`, etc.) are present.
+
+```typescript
+import { type Models } from 'appwrite';
+
+export enum Category {
+    FICTION = 'fiction',
+    NONFICTION = 'nonfiction',
+}
+
+export type Books = Models.Row & {
+    name: string;
+    author: string;
+    releaseYear: string | null;
+    category: Category | null;
+    genre: string[] | null;
+    isCheckedOut: boolean;
+};
+```
+
+---
+
+_Φ_VALIDATED: Schema calibration protocols documented._

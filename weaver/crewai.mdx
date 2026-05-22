@@ -1,0 +1,69 @@
+---
+title: "CrewAI"
+description: "Orchestration, tasks, and specialist personas"
+---
+
+> Version: 0.103.0+ (Zenith)
+> Protocol: Verdigris Swarm Choreography
+> Jurisdiction: Backend Orchestration Kernel
+
+This codex totalizes the usage of **CrewAI** within the Weaver Studio substrate. We utilize decentralized specialists to achieve long-horizon complex tasks through structured choreography.
+
+## 1. The Sovereign Crew Anatomy
+
+A crew represents a collaborative group of agents working together. Within ΛΞVON, every crew is governed by the **Chimera Constitution** and calibrated for high-fidelity execution.
+
+### Crew Attributes
+
+| Attribute    | Description                                                                     |
+| :----------- | :------------------------------------------------------------------------------ |
+| **Tasks**    | Atomic operational units assigned to the swarm with explicit "Expected Output". |
+| **Agents**   | Specialized personas (BEEP, WEAVER, BLOODHOUND) with rhetorical weights.        |
+| **Process**  | `sequential` (linear work) or `hierarchical` (manager-led).                     |
+| **Planning** | Mandatory `planning=True` to manifest an execution roadmap.                     |
+| **Memory**   | Hippocampal storage spanning short-term, long-term, and entity memory.          |
+
+## 2. Creating Crews: The @CrewBase Ritual
+
+We favor the **YAML Configuration** pattern for absolute jurisdictional parity between the Nexus and the Studio.
+
+```python
+@CrewBase
+class StrategicMissionCrew():
+    agents_config = 'config/agents.yaml'
+    tasks_config = 'config/tasks.yaml'
+
+    @agent
+    def oracle(self) -> Agent:
+        return build_syndicate_agent("oracle_witness", seed="nexus-oracle")
+
+    @task
+    def planning_task(self) -> Task:
+        return Task(config=self.tasks_config['planning_task'], agent=self.oracle())
+
+    @crew
+    def crew(self) -> Crew:
+        return Crew(
+            agents=self.agents,
+            tasks=self.tasks,
+            process=Process.sequential,
+            planning=True,
+            share_crew=True # Opt-in for high-fidelity telemetry
+        )
+```
+
+## 3. Agent Reasoning & DNA
+
+Individual units are provided with `reasoning=True`. This enables a pre-execution "Thinking" phase where the unit reflects on the task and evaluates its own DNA traits (Stochasticity, Rigor, Persistence) against the mission requirements.
+
+## 4. Crew Output (Convergence)
+
+Results are encapsulated in the `CrewOutput` class, providing structured access to:
+
+- **Raw**: Terminal conclusory string.
+- **Pydantic**: Structured logical filaments for database insertion.
+- **Token Usage**: Metabolic scrying data for the Fiduciary Ledger.
+
+---
+
+_MANDATE: Every leyline is an anchor in the void._

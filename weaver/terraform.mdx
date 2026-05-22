@@ -1,0 +1,123 @@
+---
+title: "Terraform"
+description: "Appwrite Terraform provider"
+---
+
+> Jurisdiction: Root Orchestration Layer
+> Version: V666.TOTAL_PARITY
+> Protocol: Verdigris V12.0
+
+Manage Appwrite infrastructure as code with the official Terraform provider. Works with Appwrite Cloud and Community Edition.
+
+## 1. Configuration Rituals {% #configuration %}
+
+Declare the provider source in a `terraform` block. You point it at your API endpoint and authenticate with a project API key.
+
+```hcl
+terraform {
+  required_providers {
+    appwrite = {
+      source = "appwrite/appwrite"
+    }
+  }
+}
+
+provider "appwrite" {
+  endpoint   = "https://<REGION>.cloud.appwrite.io/v1"
+  project_id = "project-id"
+  api_key    = "api-key"
+}
+```
+
+### Environment Variables
+Supplying credentials via environment variables is recommended for CI/CD:
+
+```bash
+export APPWRITE_ENDPOINT="https://<REGION>.cloud.appwrite.io/v1"
+export APPWRITE_PROJECT_ID="project-id"
+export APPWRITE_API_KEY="api-key"
+```
+
+## 2. Databases (TablesDB) {% #databases %}
+
+The provider exposes Appwrite **TablesDB** as Terraform resources. Typical order: create a **database** (`appwrite_tablesdb`), then **tables**, then **columns** and **indexes**.
+
+### Example Manifest
+
+```hcl
+resource "appwrite_tablesdb" "main" {
+  id   = "main"
+  name = "main"
+}
+
+resource "appwrite_tablesdb_table" "users" {
+  database_id = appwrite_tablesdb.main.id
+  id          = "users"
+  name        = "users"
+}
+
+resource "appwrite_tablesdb_column" "name" {
+  database_id = appwrite_tablesdb.main.id
+  table_id    = appwrite_tablesdb_table.users.id
+  key         = "name"
+  type        = "varchar"
+  size        = 255
+  required    = true
+}
+```
+
+## 3. Storage Enclaves {% #storage %}
+
+Manage [Storage](/docs/products/storage) buckets: file size limits, allowed extensions, compression, and security filaments.
+
+### Example Manifest
+
+```hcl
+resource "appwrite_storage_bucket" "images" {
+  id                      = "images"
+  name                    = "Project Images"
+  maximum_file_size       = 10485760
+  allowed_file_extensions = ["jpg", "png", "webp"]
+  compression             = "gzip"
+  file_security           = true
+  encryption              = true
+  antivirus               = true
+}
+```
+
+## 4. Messaging Protocols {% #messaging %}
+
+Configure Messaging providers, topics, and subscribers for email, SMS, and push delivery.
+
+### Providers & Topics
+
+```hcl
+resource "appwrite_messaging_provider" "smtp" {
+  id         = "smtp"
+  name       = "smtp"
+  type       = "smtp"
+  host       = "smtp.example.com"
+  port       = 587
+  username   = "user@example.com"
+  password   = var.smtp_password
+  from_email = "noreply@example.com"
+}
+
+resource "appwrite_messaging_topic" "announcements" {
+  id   = "announcements"
+  name = "announcements"
+}
+
+resource "appwrite_messaging_subscriber" "user_email" {
+  topic_id  = appwrite_messaging_topic.announcements.id
+  target_id = "user-email-target-id"
+}
+```
+
+## 5. The Export Ritual {% #export %}
+
+Within the **Weaver Studio**, you can use the **Automation Registry** to pulse an "Infrastructure Export" ritual. This scries your current visual substrate and materializes a corresponding `main.tf` file for absolute deployment parity.
+
+---
+
+_Φ_VALIDATED: Infrastructure-as-Code substrate ratified._

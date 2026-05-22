@@ -1,0 +1,51 @@
+---
+title: "Triggers"
+description: "Aetheric sensors and webhooks"
+---
+
+> Version: V666.TOTAL_PARITY
+> Domain: Real-time Event Ingestion
+> Protocol: Verdigris Palingenesis V12.0
+
+## 1. Overview
+
+**Triggers** (Aetheric Sensors) provide the high-privileged link between external ecosystem events and the **ΛΞVOS** Swarm Engine. They eliminate the need for polling by providing reactive conduits that immediately awaken specialized crews.
+
+## 2. Ingestion Conduits
+
+The Nexus exposes the following high-privileged endpoints for signal ingestion:
+
+- **HubSpot**: `POST /api/v1/triggers/webhook/hubspot`
+- **Slack**: `POST /api/v1/triggers/webhook/slack`
+- **MS Teams**: `POST /api/v1/triggers/webhook/msteams`
+
+### 2.1 HubSpot Calibration
+
+1. Navigate to **HubSpot Workflows**.
+2. Manifest a **Webhook** action.
+3. Target URL: Your public Nexus HubSpot endpoint.
+4. The Nexus will ingest the payload and attach it to the mission context as `crewai_trigger_payload`.
+
+### 2.2 Slack Calibration
+
+1. Create a **Slack App** in the Slack API portal.
+2. In **Event Subscriptions**, enable events and point to the Nexus Slack endpoint.
+3. Redeem the `url_verification` challenge (handled automatically by the Nexus).
+4. Attune a `Trigger` in the Loom Studio matching the Slack source.
+
+## 3. Data Anatomy
+
+Every triggered mission receives a `crewai_trigger_payload` in its procedural memory. This can be scryed by the first task using standard variable interpolation:
+
+```python
+# YAML Task Specification
+description: "Review the incoming pulse: {crewai_trigger_payload}. Extract the user email and initiate triage."
+```
+
+## 4. Forensic Testing
+
+Architects should utilize the **Simulation Ritual** (`/simulate/{id}`) to pulse synthetic signals during the calibration phase. Every pulse is scribed to the **Signal Chronicle** for forensic auditing.
+
+---
+
+_Φ_VALIDATED: Sensors attuned. Substrate listening._

@@ -1,0 +1,56 @@
+---
+title: "Authentication"
+description: "Sigil sovereignty, magic sigils, SSR protocols"
+---
+
+> Version: V666.TOTAL_OPTIMIZED
+> Jurisdiction: Identity Sanctum
+> Protocol: Dual-Uplink SSR + Email OTP + Federated SSO
+
+## 1. The Sovereign Sigil Doctrine
+
+Authentication in **ΛΞVOS** is the first act of creation. We move beyond static passwords to a multi-layered approach that prioritizes ease-of-access without compromising structural integrity.
+
+## 2. Bimodal Entry Rituals
+
+### 2.1 Email OTP (Primary — Passwordless)
+
+The primary entry ritual on `/`. The user pulses their email; Appwrite sends a 6-digit code (`createEmailToken`). The user enters the code in-app (`createSession`)—no redirect, no magic URL. Implemented in `src/services/appwrite.ts` and `src/app/page.tsx`.
+
+### 2.2 Email + Password
+
+Classic credential flow on `/login` and `/signup` for architects who prefer a static sigil.
+
+### 2.3 Federated SSO (Single Sign-On)
+
+High-velocity access conduits. By synapses with **GitHub** or **Google**, architects can bypass credential loops using OAuth 2.0.
+
+## 3. SSR Authentication Flow
+
+In server-side rendered application segments (Loom Dashboard), a **Server SDK** is used to handle authentication.
+
+1.  **Ritual**: Architect enters credentials.
+2.  **Uplink**: Server uses the **Admin Client** (API Key) to authenticate.
+3.  **Anchoring**: Server sends a session cookie (`lazvos_session`) to the browser.
+4.  **Parity**: All subsequent pulses include this cookie for high-privileged verification.
+
+## 4. Dual-Uplink Strategy
+
+| Component          | Ritual                 | Purpose                                                            |
+| ------------------ | ---------------------- | ------------------------------------------------------------------ |
+| **Admin Client**   | `createAdminClient()`  | Bypasses rate limits; performs high-privileged account scrying.    |
+| **Session Client** | `createServerClient()` | Makes requests on behalf of the end-user using the session cookie. |
+
+## 5. Security & Recovery
+
+### 5.1 MFA Shielding
+
+Advanced multi-factor authentication methods including time-based OTPs and smart device notifications.
+
+### 5.2 Password Recovery
+
+Temporal secret keys dispatched via email for password reset. Links are valid for 1 hour and restricted to verified platform domains to prevent redirect attacks.
+
+---
+
+_STATUS: IDENTITY ENCLAVE OPTIMIZED. ACCESS SECURED._

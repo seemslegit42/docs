@@ -1,0 +1,104 @@
+---
+title: "Databases"
+description: "TablesDB and transaction rituals"
+---
+
+> Version: V666.TOTAL_PARITY
+> Jurisdiction: Persistence Bedrock
+> Protocol: Verdigris Palingenesis V12.0
+
+Appwrite Databases (TablesDB) provide high-performance and scalable structured data storage for your key application, business, and user data. Within **ΛΞVON OS**, this serves as the primary administrative plane for managing persistent intent.
+
+## 1. Structural Hierarchy
+
+Data is organized into a tri-layered hierarchy:
+
+1.  **Databases**: The largest organizational units (e.g., `ENCLAVE_01`).
+2.  **Tables**: Containers for rows with identical structure (e.g., `agent_DNA`).
+3.  **Rows**: Individual records containing specific logical filaments.
+
+## 2. Columns: Schema Definition
+
+Columns define the structure of your table's rows and help the Appwrite API validate user input.
+
+| Column Type    | Description                                                      |
+| -------------- | ---------------------------------------------------------------- |
+| `varchar`      | String column (max 16,383 chars). Fully indexable if size < 768. |
+| `text`         | Text column for larger blobs (max 16,383 chars).                 |
+| `integer`      | Integer values for counters or IDs.                              |
+| `boolean`      | Boolean logic filaments (True/False).                            |
+| `datetime`     | ISO 8601 timestamps for temporal scrying.                        |
+| `enum`         | Predefined set of values for categorical state.                  |
+| `relationship` | Links one table to another (1:1, 1:N, N:N).                      |
+
+## 3. Row Operations
+
+### 3.1 Creating Rows
+
+To create a row, use the `createRow` method. Users must have `create` permissions at the table level.
+
+```typescript
+import { ID, TablesDB } from 'appwrite';
+
+const tablesDB = new TablesDB(client);
+
+const row = await tablesDB.createRow({
+    databaseId: 'ENCLAVE_01',
+    tableId: 'MISSIONS',
+    rowId: ID.unique(),
+    data: { title: 'Causal Manifestation' },
+});
+```
+
+### 3.2 Listing & Querying Rows
+
+Use the `listRows` endpoint to read and filter data using Appwrite's shared set of query methods.
+
+```typescript
+import { Query, TablesDB } from 'appwrite';
+
+const tablesDB = new TablesDB(client);
+
+const books = await tablesDB.listRows({
+    databaseId: 'ENCLAVE_01',
+    tableId: 'LIBRARY',
+    queries: [Query.equal('author', 'Oscar Wilde')],
+});
+```
+
+## 4. Type Safety with Models
+
+For a superior developer experience, **ΛΞVON OS** enforces type safety using custom interfaces.
+
+```typescript
+interface UnitDNA {
+    label: string;
+    stochasticity: number;
+    rigor: number;
+    is_active: boolean;
+}
+
+// High-privileged scrying with generics
+const dna = await tablesDB.listRows<UnitDNA>({
+    databaseId: 'ENCLAVE_01',
+    tableId: 'UNIT_REGISTRY',
+});
+```
+
+## 5. Transactions
+
+All row operations support `transactionId`. Operations are staged to an internal log and only anchored to the bedrock once the transaction is committed.
+
+```typescript
+await tablesDB.createRow({
+    databaseId: 'ENCLAVE_01',
+    tableId: 'TASKS',
+    rowId: ID.unique(),
+    data: { title: 'New Mission' },
+    transactionId: 'TX_COORD_01',
+});
+```
+
+---
+
+_Φ_VALIDATED: Persistence substrate documented. All leylines are anchors._

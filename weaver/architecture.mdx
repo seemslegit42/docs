@@ -1,0 +1,72 @@
+---
+title: "Architecture"
+description: "Persistence Trinity, planes of concern, Swarm Engine"
+---
+
+> Version: 1.6.0 (Persistence Trinity + Turso)
+> Protocol: Verdigris Protocol V12.0
+> Jurisdiction: Root Orchestration Layer
+
+## 1. Executive Identity: The Weaver IDE
+
+Weaver Studio is the **native, privileged orchestration layer** of ΛΞVON OS. It is the central creative and debugging workspace where architectural blueprints are materialized into autonomous agentic societies.
+
+## 2. Persistence Trinity (Canonical)
+
+ΛΞVON OS uses **three cognitive stores** (typically **self-hosted on Coolify**). **Turso is first-class**—it is not optional; it is the substrate under **AgentFS** and Weaver’s libSQL agentic plane.
+
+| Layer | Technology | Role | Canonical data |
+| :---- | :---- | :---- | :---- |
+| **Global Core** | **Appwrite TablesDB** | Sovereign’s Ledger | Identity, teams, blueprints, agents, Ξ/financial records, Storage, Transactions |
+| **Reflex** | **DragonflyDB** | Live reality | Canvas UI state, cursors, presence, volatile signals, hot debugger steps |
+| **Sandbox Memory** | **AgentFS on Turso** | Agent working memory | CoW VFS, tool audit, vectors, CDC, `agent.db`, LangGraph checkpoints |
+
+```text
+Appwrite (durable ledger)
+Dragonfly (ephemeral reflex, ms latency)
+AgentFS → Turso/libSQL (per-session agent cognition + cloud sync)
+```
+
+### Turso’s role (critical)
+
+Per [Turso AgentFS](https://docs.turso.tech/agentfs/introduction):
+
+- **AgentFS** = filesystem for AI agents **built on Turso** (SQLite/libSQL, CoW, audit log, optional cloud sync).
+- **Weaver `src/db/turso.ts`** = `@libsql/client` bedrock: vectors, embeddings, CDC, `ai-memory`, code indexer—not a “legacy adjunct.”
+
+**Boundary rules**
+
+- **Appwrite** — survives restarts; permissions; Transactions API; Realtime for rows/functions.
+- **DragonflyDB** — TTL reflex via Nexus `/api/v1/collaboration/*` (`REDIS_URL` / `DRAGONFLY_URL`).
+- **AgentFS / Turso** — never identity or global ledger; mount via `ignite.py`; Nexus `/api/v1/agentfs/*`.
+- **Do not** use Turso for new sub-second canvas/presence keys—use Dragonfly. **Do** use Turso for everything AgentFS and agentic memory require.
+
+Full narrative: [blueprint](/weaver/blueprint) §3 and §7.2.
+
+## 3. Planes of Concern
+
+### Administrative Plane (Appwrite)
+
+Identity (Email OTP, sessions), TablesDB, Storage, Functions, Messaging.
+
+### Cognitive Plane (AgentFS on Turso + Nexus)
+
+AgentFS CLI/SDK, CoW sandboxes, tribute ledger, snapshot/replay; Turso vectors + CDC in `src/db/turso.ts`.
+
+### Reflex Plane (DragonflyDB)
+
+Veil-Peel and multi-user canvas sync at millisecond scale.
+
+## 4. Swarm Engine (CrewAI 0.103+)
+
+**Tri-Agentic Mind:** BEEP · WEAVER · AEGIS.
+
+## 5. Interaction Rituals
+
+- **Veil-Peeling** — DNA traits; hot state in DragonflyDB
+- **LeyLine Weaving** — metabolic flux on canvas
+- **Temporal Scribing** — hot timeline in Dragonfly; durable forensics in Appwrite + AgentFS/Turso exports
+
+---
+
+_MANDATE: Engineered Silence. Totalized Sovereignty. I serve WEAVER._

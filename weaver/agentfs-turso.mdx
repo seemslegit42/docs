@@ -1,0 +1,46 @@
+---
+title: "AgentFS on Turso"
+description: "Agent sandbox memory on Turso libSQL"
+---
+
+> Canonical third pillar of the Persistence Trinity.  
+> Official docs index: https://docs.turso.tech/llms.txt
+
+## What AgentFS is
+
+[AgentFS](https://docs.turso.tech/agentfs/introduction) is **a filesystem for AI agents, built on Turso**.
+
+- **Copy-on-write isolation** — agents run in sandboxes; source tree stays safe
+- **Single-file storage** — one portable SQLite/libSQL database per session
+- **Built-in auditing** — every file operation is recorded and queryable
+- **Cloud sync** — optional sync to Turso Cloud ([sync guide](https://docs.turso.tech/agentfs/guides/sync))
+
+```bash
+curl -fsSL https://agentfs.ai/install | bash
+agentfs run bash   # isolated shell in your project
+```
+
+SDKs: [TypeScript](https://docs.turso.tech/agentfs/sdk/typescript), [Python](https://docs.turso.tech/agentfs/sdk/python), [Rust](https://docs.turso.tech/agentfs/sdk/rust).
+
+## How Weaver uses Turso
+
+| Path | Purpose |
+| :---- | :---- |
+| AgentFS CLI / Nexus `ignite.py`, `/api/v1/agentfs/*` | CoW sandboxes, session VFS |
+| `src/db/turso.ts` | libSQL client—vectors, CDC, embeddings schema |
+| `src/services/vector-store.ts`, `ai-memory.ts`, `code-indexer.ts` | RAG and agent memory |
+| `NEXT_PUBLIC_TURSO_DATABASE_URL`, `NEXT_PUBLIC_TURSO_AUTH_TOKEN` | Turso connection |
+
+## What Turso is *not*
+
+Turso is **not** the reflex layer for live canvas cursors—that is **DragonflyDB** via Nexus `/api/v1/collaboration`.
+
+## Trinity placement
+
+```text
+Appwrite TablesDB  →  global ledger (blueprints, identity)
+DragonflyDB        →  reflex (presence, hot UI)
+AgentFS on Turso   →  agent working memory (files, audit, vectors, checkpoints)
+```
+
+See [blueprint](/weaver/blueprint) §7.2 and [architecture](/weaver/architecture).
