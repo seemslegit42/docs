@@ -5,7 +5,7 @@ Mintlify site for **Weaver Studio** and the **Nexus Swarm API**. This repository
 ## Prerequisites
 
 - [Bun](https://bun.sh) 1.1+
-- Node 20+ (Mintlify CLI runtime)
+- **Node 20 LTS** for the Mintlify CLI (Node 25+ is not supported by `mint` yet)
 
 ## Local preview
 

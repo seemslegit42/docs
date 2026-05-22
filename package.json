@@ -2,6 +2,9 @@
   "name": "@weaver/docs",
   "private": true,
   "type": "module",
+  "devDependencies": {
+    "mint": "^4.2.574"
+  },
   "scripts": {
     "dev": "bunx mint dev",
     "dev:port": "bunx mint dev --port 3333",
