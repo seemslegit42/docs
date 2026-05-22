@@ -1,55 +1,44 @@
-# Mintlify Starter Kit
+# ΛΞVON OS · Weaver documentation
 
-Use the starter kit to get your docs deployed and ready to customize.
+Mintlify site for **Weaver Studio** and the **Nexus Swarm API**. This repository is a [git submodule](https://github.com/seemslegit42/ide) at `docs/` in the IDE monorepo.
 
-Click the green **Use this template** button at the top of this repo to copy the Mintlify starter kit. The starter kit contains examples with
+## Prerequisites
 
-- Guide pages
-- Navigation
-- Customizations
-- API reference pages
-- Use of popular components
+- [Bun](https://bun.sh) 1.1+
+- Node 20+ (Mintlify CLI runtime)
 
-**[Follow the full quickstart guide](https://starter.mintlify.com/quickstart)**
+## Local preview
 
-## AI-assisted writing
-
-Set up your AI coding tool to work with Mintlify:
+From this directory:
 
 ```bash
-npx skills add https://mintlify.com/docs
+bun install   # optional; mint is also available via the parent IDE repo
+bun run dev
 ```
 
-This command installs Mintlify's documentation skill for your configured AI tools like Claude Code, Cursor, Windsurf, and others. The skill includes component reference, writing standards, and workflow guidance.
+From the **parent IDE repo**:
 
-See the [AI tools guides](/ai-tools) for tool-specific setup.
-
-## Development
-
-Install the [Mintlify CLI](https://www.npmjs.com/package/mint) to preview your documentation changes locally. To install, use the following command:
-
-```
-npm i -g mint
+```bash
+bun run docs:dev
 ```
 
-Run the following command at the root of your documentation, where your `docs.json` is located:
+Open http://localhost:3000 (Mintlify picks the next free port if 3000 is taken).
 
+## Other commands
+
+```bash
+bun run broken-links
+bun run update
 ```
-mint dev
-```
 
-View your local preview at `http://localhost:3000`.
+## Publishing
 
-## Publishing changes
+Connect this repo in the [Mintlify dashboard](https://dashboard.mintlify.com). Pushes to `main` deploy automatically when the GitHub app is installed.
 
-Install our GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app) to propagate changes from your repo to your deployment. Changes are deployed to production automatically after pushing to the default branch.
+## Structure
 
-## Need help?
-
-### Troubleshooting
-
-- If your dev environment isn't running: Run `mint update` to ensure you have the most recent version of the CLI.
-- If a page loads as a 404: Make sure you are running in a folder with a valid `docs.json`.
-
-### Resources
-- [Mintlify documentation](https://mintlify.com/docs)
+| Path | Purpose |
+| :--- | :--- |
+| `weaver/*.mdx` | Product and platform specifications |
+| `quickstart.mdx` | Local dev setup (Bun / `weave`) |
+| `docs.json` | Site theme, nav, and branding |

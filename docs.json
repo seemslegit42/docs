@@ -1,11 +1,18 @@
 {
   "$schema": "https://mintlify.com/docs.json",
   "theme": "mint",
-  "name": "Weaver Studio",
+  "name": "ΛΞVON OS · Weaver",
+  "description": "Documentation for Weaver Studio and the Nexus Swarm API.",
   "colors": {
-    "primary": "#16A34A",
-    "light": "#07C983",
-    "dark": "#15803D"
+    "primary": "#9810F0",
+    "light": "#C084FC",
+    "dark": "#6B21A8"
+  },
+  "background": {
+    "color": {
+      "light": "#FAFAFA",
+      "dark": "#020204"
+    }
   },
   "favicon": "/favicon.svg",
   "navigation": {
@@ -62,20 +69,11 @@
         ]
       },
       {
-        "tab": "API reference",
+        "tab": "API",
         "groups": [
           {
-            "group": "API documentation",
-            "pages": ["api-reference/introduction"]
-          },
-          {
-            "group": "Endpoint examples",
-            "pages": [
-              "api-reference/endpoint/get",
-              "api-reference/endpoint/create",
-              "api-reference/endpoint/delete",
-              "api-reference/endpoint/webhook"
-            ]
+            "group": "Nexus & Appwrite",
+            "pages": ["weaver/api", "api-reference/introduction"]
           }
         ]
       }
@@ -83,9 +81,14 @@
     "global": {
       "anchors": [
         {
-          "anchor": "Repository",
-          "href": "https://github.com/seemslegit42/docs",
+          "anchor": "Weaver IDE",
+          "href": "https://github.com/seemslegit42/ide",
           "icon": "github"
+        },
+        {
+          "anchor": "Docs source",
+          "href": "https://github.com/seemslegit42/docs",
+          "icon": "book"
         }
       ]
     }
@@ -97,17 +100,22 @@
   "navbar": {
     "links": [
       {
-        "label": "IDE repo",
-        "href": "https://github.com/seemslegit42/docs"
+        "label": "GitHub",
+        "href": "https://github.com/seemslegit42/ide"
       }
-    ]
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Run locally",
+      "href": "http://localhost:3000"
+    }
   },
   "contextual": {
     "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/seemslegit42/docs"
+      "github": "https://github.com/seemslegit42/ide"
     }
   }
 }

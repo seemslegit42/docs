@@ -1,0 +1,11 @@
+{
+  "name": "@weaver/docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bunx mint dev",
+    "dev:port": "bunx mint dev --port 3333",
+    "broken-links": "bunx mint broken-links",
+    "update": "bunx mint update"
+  }
+}

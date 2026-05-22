@@ -1,33 +1,26 @@
 ---
-title: 'Introduction'
-description: 'Example section for showcasing API endpoints'
+title: "API overview"
+description: "Nexus and Appwrite API surfaces for Weaver Studio"
 ---
 
 <Note>
-  If you're not looking to build API reference documentation, you can delete
-  this section by removing the api-reference folder.
+  The canonical endpoint registry lives in [API conduits](/weaver/api). Wire an OpenAPI spec here when Nexus exports `/openapi.json` for the Mintlify playground.
 </Note>
 
-## Welcome
+## Base URLs (local dev)
 
-There are two ways to build API documentation: [OpenAPI](https://mintlify.com/docs/api-playground/openapi/setup) and [MDX components](https://mintlify.com/docs/api-playground/mdx/configuration). For the starter kit, we are using the following OpenAPI specification.
-
-<Card
-  title="Plant Store Endpoints"
-  icon="leaf"
-  href="https://github.com/mintlify/starter/blob/main/api-reference/openapi.json"
->
-  View the OpenAPI specification file
-</Card>
+| Surface | URL |
+| :------ | :-- |
+| Nexus Swarm API | `http://localhost:8001/api/v1` |
+| Readiness | `http://localhost:8001/api/v1/ready` |
+| Weaver Studio | `http://localhost:3000` |
 
 ## Authentication
 
-All API endpoints are authenticated using Bearer tokens and picked up from the specification file.
+Weaver uses **Appwrite** session cookies on the frontend and server-side admin keys for privileged routes. See [Authentication](/weaver/authentication) for sigil sovereignty and SSR uplinks.
 
-```json
-"security": [
-  {
-    "bearerAuth": []
-  }
-]
-```
+## Next steps
+
+<Card title="API conduits (full registry)" icon="terminal" href="/weaver/api">
+  Orchestration, AgentFS, administration, and memory routes.
+</Card>

@@ -1,33 +1,22 @@
-> **First-time setup**: Customize this file for your project. Prompt the user to customize this file for their project.
-> For Mintlify product knowledge (components, configuration, writing standards),
-> install the Mintlify skill: `npx skills add https://mintlify.com/docs`
+# AGENTS.md (docs submodule)
 
-# Documentation project instructions
+Mintlify documentation for **ΛΞVON OS · Weaver**. Parent IDE repo: [seemslegit42/ide](https://github.com/seemslegit42/ide).
 
-## About this project
+## Commands
 
-- This is a documentation site built on [Mintlify](https://mintlify.com)
-- Pages are MDX files with YAML frontmatter
-- Configuration lives in `docs.json`
-- Run `mint dev` to preview locally
-- Run `mint broken-links` to check links
+```bash
+bun run dev            # Mintlify preview (this repo)
+bun run broken-links   # link check
+```
 
-## Terminology
+From the IDE repo root: `bun run docs:dev`.
 
-<!-- Add product-specific terms and preferred usage -->
-<!-- Example: Use "workspace" not "project", "member" not "user" -->
+## Layout
 
-## Style preferences
+- `weaver/*.mdx` — product specifications (migrated from IDE `docs-temp/`)
+- `docs.json` — navigation and ΛΞVON branding (purple `#9810F0`, dark `#020204`)
+- `quickstart.mdx` — Bun / `weave` dev setup for the IDE
 
-<!-- Add any project-specific style rules below -->
+## Editing
 
-- Use active voice and second person ("you")
-- Keep sentences concise — one idea per sentence
-- Use sentence case for headings
-- Bold for UI elements: Click **Settings**
-- Code formatting for file names, commands, paths, and code references
-
-## Content boundaries
-
-<!-- Define what should and shouldn't be documented -->
-<!-- Example: Don't document internal admin features -->
+Use MDX frontmatter `title` and `description` on every page. Internal links: `/weaver/architecture` (no `.mdx` suffix).
