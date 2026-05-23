@@ -1,0 +1,62 @@
+---
+title: "Environment"
+description: "Canonical .env, observatory UI, and env tooling"
+---
+
+Weaver uses **one canonical environment file** at the repo root. Nexus, Next.js, and `./weave` all read from **`.env`** — do not maintain a separate `nexus/.env`.
+
+## Canonical file
+
+| Item | Location |
+| :--- | :------- |
+| Variables | `.env` (repo root) |
+| Catalog schema | `config/env.manifest.json` |
+| Shared TS catalog | `config/env-catalog.ts` |
+
+### Planes (whole-app)
+
+| Plane | Examples |
+| :---- | :------- |
+| **frontend** | `NEXT_PUBLIC_*`, Appwrite client IDs |
+| **backend** | `DATABASE_URL`, Celery, Nexus-only keys |
+| **shared** | Keys used by both Next server actions and Nexus |
+| **weave** | Auto-written by `./weave` (`.dev/runtime.env`) |
+| **cloud** | Appwrite API key, Turso, Gemini/Groq/Anthropic |
+| **tables** | Appwrite collection / table IDs |
+
+## Observatory UI
+
+Open **http://localhost:3000/observatory** (or Sidebar → **Env Observatory**) for:
+
+- Per-plane variable status (set / missing / secret)
+- Stack probes (Nexus ready, frontend, Dragonfly, Turso, Appwrite)
+- Warnings for duplicate legacy env files
+
+API: `GET /api/observatory` — aggregated snapshot; also callable via `apiService.fetchObservatory()`.
+
+## CLI rituals
+
+From the IDE repo root:
+
+```bash
+bun run env:check          # print plane summary (no secrets)
+bun run env:unify          # normalize quotes/sections in .env
+bun run env:unify --delete-legacy   # remove nexus/.env if present
+```
+
+## Weave runtime overlay
+
+`./weave` writes **`.dev/runtime.env`** with ports, Dragonfly URL, and session paths. Nexus loads root `.env` first (`nexus/config/config.py`).
+
+## Readiness endpoints
+
+| URL | Purpose |
+| :-- | :------ |
+| `http://localhost:8001/api/v1/ready` | Nexus operational DB + Dragonfly + cloud config |
+| `http://localhost:8001/api/v1/incantation` | Boot URLs + trinity manifest |
+
+## Related
+
+- [Development quickstart](/quickstart)
+- [Frontend wiring](/weaver/frontend-wiring)
+- [CI/CD](/weaver/cicd) — secrets in GitHub Actions, not committed `.env`

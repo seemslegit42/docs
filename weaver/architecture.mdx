@@ -67,6 +67,19 @@ Veil-Peel and multi-user canvas sync at millisecond scale.
 - **LeyLine Weaving** — metabolic flux on canvas
 - **Temporal Scribing** — hot timeline in Dragonfly; durable forensics in Appwrite + AgentFS/Turso exports
 
+## 6. Frontend shell (Weaver Studio)
+
+Next.js routes **`/canvas`** (primary IDE) and **`/dashboard`** (metrics) share:
+
+- **Sidebar** — registry tabs (agents, skills, toolkits, APM, …)
+- **HudLayout** — palette, console, AgentFS codex, glasshouse simulation
+- **OverlayManager** — lazy-loaded registries and settings/marketplace modals
+- **SovereignDock** — command bar; `/run`, `/codex`, `/debug`, `/observatory`
+- **SubstrateInitializer** — Appwrite session + Nexus prefetch on login
+
+All browser Nexus traffic: `src/services/api.ts` → `/api/v1` rewrite → FastAPI.
+Detail: [Frontend wiring](/weaver/frontend-wiring) · [Environment](/weaver/environment).
+
 ---
 
 _MANDATE: Engineered Silence. Totalized Sovereignty. I serve WEAVER._

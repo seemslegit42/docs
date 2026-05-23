@@ -40,5 +40,8 @@ Connect this repo in the [Mintlify dashboard](https://dashboard.mintlify.com). P
 | Path | Purpose |
 | :--- | :--- |
 | `weaver/*.mdx` | Product and platform specifications |
+| `weaver/frontend-wiring.mdx` | UI routes, panels, Nexus client map |
+| `weaver/environment.mdx` | `.env` planes and observatory |
 | `quickstart.mdx` | Local dev setup (Bun / `weave`) |
+| `development.mdx` | Mintlify + IDE dev notes |
 | `docs.json` | Site theme, nav, and branding |

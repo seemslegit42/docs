@@ -1,50 +1,62 @@
 ---
 title: "Next.js"
-description: "Frontend stack and patterns"
+description: "Frontend stack, routes, and Nexus proxy"
 ---
 
-> Source: Next.js 15 App Router Specification
+Weaver Studio uses **Next.js App Router** (React 19, Bun). Product code lives under `src/app/` and `src/components/`.
 
-Next.js uses **file-system based routing**, meaning folders define routes and files define the UI.
+## Routes
 
-## 1. Creating a Page
+| Path | Role |
+| :--- | :--- |
+| `/canvas` | Primary IDE — React Flow canvas, HUD, Sovereign dock |
+| `/dashboard` | Metrics widgets + registry overlays |
+| `/observatory` | Environment planes UI |
+| `/login`, `/signup`, … | Appwrite auth |
 
-A **page** is UI rendered on a specific route. To create one, add a `page.tsx` file inside a route segment.
+See [Frontend wiring](/weaver/frontend-wiring) for panel/registry map.
 
-```tsx
-// app/canvas/page.tsx
-export default function Page() {
-    return <h1>Interactive Loom</h1>;
-}
+## Nexus proxy
+
+`next.config.ts` rewrites browser calls:
+
+```ts
+{ source: '/api/v1/:path*', destination: 'http://localhost:8001/api/v1/:path*' }
 ```
 
-## 2. Creating a Layout
+Use **`src/services/api.ts`** — do not hardcode `:8001` in client components.
 
-A **layout** is UI shared between multiple pages. It preserves state and remains interactive on navigation.
+Server-side Nexus calls: **`src/services/nexus-server.ts`** and **`src/app/actions/nexus.ts`**.
 
-```tsx
-// app/layout.tsx
-export default function RootLayout({ children }: { children: React.ReactNode }) {
-    return (
-        <html lang='en'>
-            <body>{children}</body>
-        </html>
-    );
-}
+## State & services
+
+| Layer | Path |
+| :---- | :--- |
+| Global store | `src/store/` (Zustand slices) |
+| API client | `src/services/api.ts` |
+| AgentFS | `src/services/agentfs.ts` |
+| Appwrite client | `src/services/appwrite.ts` |
+| Realtime | `src/services/realtime.ts` |
+| Turso / vectors | `src/db/turso.ts` |
+
+## UI conventions
+
+- **components/** — presentation (panels, registries, canvas)
+- **services/** — business logic and HTTP
+- **store/** — client state
+- **hooks/** — React hooks (`use-agentfs-session`, `use-workflow-collaboration`)
+- Avoid new code in `src/lib/` unless it is a portable library
+
+## Tooling
+
+```bash
+bun dev              # ./weave — full stack
+bun run build        # production build
+bun run check        # Biome lint/format (if script present)
+bun test src/utils/__tests__
 ```
 
-## 3. Dynamic Segments
+## Related
 
-Wrap a folder name in square brackets to create a dynamic route (e.g., `[slug]`).
-
-```tsx
-// app/blog/[slug]/page.tsx
-export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = await params;
-    return <h1>Viewing: {slug}</h1>;
-}
-```
-
----
-
-_STATUS: FRONTEND SUBSTRATE DOCUMENTED._
+- [Environment](/weaver/environment)
+- [Authentication](/weaver/authentication)

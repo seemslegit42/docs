@@ -4,71 +4,86 @@ description: "Nexus and Appwrite API registry"
 ---
 
 > Jurisdiction: Universal Translator Registry
-> Version: V666.TOTAL_PARITY
-> Protocol: Verdigris V12.0
+> Client: `src/services/api.ts` (`apiService`, `nexusApi`)
+> Proxy: `next.config.ts` rewrites `/api/v1/*` → Nexus `:8001`
 
-This registry totalizes all high-privileged API conduits connecting the **Weaver Studio** to the **Nexus Kernel**.
+## Base URLs
 
-## 📡 Base Endpoints
+| Surface | URL |
+| :------ | :-- |
+| Browser → Nexus (proxied) | `/api/v1` |
+| Direct Nexus (curl, OpenAPI) | `http://localhost:8001/api/v1` |
+| OpenAPI | `http://localhost:8001/docs` |
+| Appwrite (client SDK) | `NEXT_PUBLIC_APPWRITE_ENDPOINT` |
+| Whole-app env | `/api/observatory` (Next route, not Nexus) |
 
-- **Nexus Engine**: `http://localhost:8001/api/v1`
-- **Appwrite Administration**: `https://tor.cloud.appwrite.io/v1`
+Auth: `nexusApi` attaches `Authorization: Bearer <session>` from Appwrite via `getSovereignSigil()`.
 
----
-
-## 1. Orchestration Jurisdiction (`/orchestration`)
-
-### `POST /weave`
-
-Engages the **Council of Minds** with a full spatial graph specification.
-
-- **Payload**: `{ spec: object, thread_id: string, input_files: object }`
-- **Ritual**: Routes through **AEGIS** sentinel for constitutional audit before materializing the **CrewAI** swarm.
-
-### `POST /generate-blueprint`
-
-Mobilizes the **BEEP Oracle** to scaffold a spatial topology from natural language decrees.
+Router mount list: `nexus/router_registry.py`.
 
 ---
 
-## 🧠 2. Cognitive Plane (`/agentfs`)
+## Orchestration (`/orchestration`)
 
-### `GET /agentfs/content/{session_id}`
+| Method | Path | `apiService` | Notes |
+| :----- | :--- | :----------- | :---- |
+| POST | `/orchestration/weave` | `weaveWorkflow(spec, threadId)` | Bespoke council default |
+| POST | `/orchestration/generate-blueprint` | `generateBlueprint(description)` | BEEP scaffold |
 
-Scries the isolated sandbox VFS for high-fidelity artifact metadata (Merged View).
+## Developer (`/developer`)
 
-### `POST /agentfs/sync/{session_id}/pull`
+| Method | Path | `apiService` |
+| :----- | :--- | :----------- |
+| POST | `/developer/debug-assist` | `debugAssist(payload)` |
+| GET | `/developer/terraform/export` | `exportTerraform()` |
 
-Restores local parity with the cloud hippocampal bedrock.
+## AgentFS (`/agentfs`)
 
-### `POST /agentfs/sync/{session_id}/checkpoint`
+| Method | Path | `apiService` |
+| :----- | :--- | :----------- |
+| POST | `/agentfs/session/{id}/init` | `initAgentFsSession` |
+| GET | `/agentfs/session/{id}` | `getAgentFsStatus` |
+| GET | `/agentfs/content/{id}` | `fetchArtifacts` |
+| GET | `/agentfs/timeline/{id}` | `fetchAgentFsTimeline` |
+| POST | `/agentfs/sync/{id}/pull` | `pullAgentChanges` |
+| POST | `/agentfs/sync/{id}/push` | `pushAgentChanges` |
+| POST | `/agentfs/sync/{id}/checkpoint` | `checkpointAgentSession` |
+| GET | `/agentfs/sync/{id}/stats` | `fetchAgentFsSyncStats` |
 
-Compacts the local WAL to bound disk usage while preserving sync state.
+## Collaboration / reflex (`/collaboration`)
+
+Dragonfly-backed presence and locks:
+
+| Method | Path | `apiService` |
+| :----- | :--- | :----------- |
+| POST | `/collaboration/presence/pulse/{workflowId}` | `pulsePresence` |
+| GET | `/collaboration/mesh/{workflowId}` | `getActivePeers` |
+| GET | `/collaboration/locks/{workflowId}` | `getWorkflowLocks` |
+| POST | `/collaboration/locks/{workflowId}/{nodeId}` | `acquireNodeLock` |
+| DELETE | `/collaboration/locks/{workflowId}/{nodeId}` | `releaseNodeLock` |
+
+## Registries
+
+| Domain | Prefix | Key `apiService` methods |
+| :----- | :----- | :----------------------- |
+| Agents | `/agents` | `fetchAgents`, `createAgent`, `deleteAgent` |
+| Skills | `/skills` | `fetchSkills`, `ingestSkill`, `purgeSkill` |
+| Toolkits | `/toolkits`, `/tool_configs` | `fetchToolkits`, `getToolkitConfigs` |
+| Models | `/models` | `fetchModels`, `fetchApiKeys`, `storeModel` |
+| Knowledge | `/knowledges` | `addUpdateKnowledge` |
+| Automations | `/automations` | `fetchAutomations` |
+| Triggers | `/triggers` | `fetchUnitTriggers`, `simulateTrigger`, `updateTrigger` |
+| Marketplace | `/agent_templates` | `fetchMarketplaceAgents`, `installAgentTemplate` |
+| Resources | `/resources` | `getResources`, `uploadResource` |
+| Functions | `/functions` | `fetchFunctions`, `executeFunction` |
+| Bedrock admin | `/bedrock` | `fetchDatabases`, `fetchTables`, … |
+| Analytics | `/analytics` | `getMetrics`, `getActiveRuns`, … |
+
+## Readiness (no `/api/v1` prefix on mount)
+
+| GET | `/api/v1/ready` | Stack health |
+| GET | `/api/v1/incantation` | Boot manifest |
 
 ---
 
-## 🧱 3. Administrative Plane (`/decrees` | `/functions` | `/databases`)
-
-### `GET /decrees/databases`
-
-Retrieves all registered TablesDB relational bedrock substrates.
-
-### `POST /decrees/functions`
-
-Materializes a new serverless logic filament in the enclave.
-
----
-
-## 🛡️ 4. Identity & Governance (`/account` | `/management`)
-
-### `GET /account`
-
-Scries the identity signature of the currently synapsed architect.
-
-### `GET /management/architects`
-
-Scries the population of all registered signatures in the syndicate.
-
----
-
-_Φ_VALIDATED: All conduits are synapsed with the Sovereign's Sigil._
+See [Frontend wiring](/weaver/frontend-wiring) for which UI panels call which methods.

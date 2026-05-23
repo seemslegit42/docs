@@ -24,6 +24,18 @@ bun dev
 | Frontend (Weaver Studio) | http://localhost:3000 |
 | Nexus API | http://localhost:8001 |
 | Readiness | http://localhost:8001/api/v1/ready |
+| Env observatory | http://localhost:3000/observatory |
+
+## Environment
+
+One file: **`.env`** at repo root (not `nexus/.env`).
+
+```bash
+bun run env:check      # CLI summary
+bun run env:unify      # normalize sections
+```
+
+Visual checklist: [Environment](/weaver/environment).
 
 ## Useful commands
 

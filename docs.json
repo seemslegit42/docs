@@ -1,121 +1,108 @@
 {
-  "$schema": "https://mintlify.com/docs.json",
-  "theme": "mint",
-  "name": "ΛΞVON OS · Weaver",
-  "description": "Documentation for Weaver Studio and the Nexus Swarm API.",
-  "colors": {
-    "primary": "#9810F0",
-    "light": "#C084FC",
-    "dark": "#6B21A8"
-  },
-  "background": {
-    "color": {
-      "light": "#FAFAFA",
-      "dark": "#020204"
-    }
-  },
-  "favicon": "/favicon.svg",
-  "navigation": {
-    "tabs": [
-      {
-        "tab": "Weaver",
-        "groups": [
-          {
-            "group": "Getting started",
-            "pages": [
-              "index",
-              "quickstart",
-              "weaver/quickstart-weaver",
-              "development"
-            ]
-          },
-          {
-            "group": "Architecture",
-            "pages": [
-              "weaver/architecture",
-              "weaver/blueprint",
-              "weaver/agentfs-turso"
-            ]
-          },
-          {
-            "group": "Platform",
-            "pages": [
-              "weaver/authentication",
-              "weaver/databases",
-              "weaver/storage",
-              "weaver/triggers",
-              "weaver/type-generation",
-              "weaver/terraform"
-            ]
-          },
-          {
-            "group": "Orchestration",
-            "pages": [
-              "weaver/orchestration",
-              "weaver/beep-swarm",
-              "weaver/crewai",
-              "weaver/api"
-            ]
-          },
-          {
-            "group": "Operations",
-            "pages": [
-              "weaver/cicd",
-              "weaver/nextjs",
-              "weaver/guides",
-              "weaver/economy"
-            ]
-          }
-        ]
-      },
-      {
-        "tab": "API",
-        "groups": [
-          {
-            "group": "Nexus & Appwrite",
-            "pages": ["weaver/api", "api-reference/introduction"]
-          }
-        ]
-      }
-    ],
-    "global": {
-      "anchors": [
-        {
-          "anchor": "Weaver IDE",
-          "href": "https://github.com/seemslegit42/ide",
-          "icon": "github"
-        },
-        {
-          "anchor": "Docs source",
-          "href": "https://github.com/seemslegit42/docs",
-          "icon": "book"
+    "$schema": "https://mintlify.com/docs.json",
+    "theme": "mint",
+    "name": "ΛΞVON OS · Weaver",
+    "description": "Documentation for Weaver Studio and the Nexus Swarm API.",
+    "colors": {
+        "primary": "#9810F0",
+        "light": "#C084FC",
+        "dark": "#6B21A8"
+    },
+    "background": {
+        "color": {
+            "light": "#FAFAFA",
+            "dark": "#020204"
         }
-      ]
+    },
+    "favicon": "/favicon.svg",
+    "navigation": {
+        "tabs": [
+            {
+                "tab": "Weaver",
+                "groups": [
+                    {
+                        "group": "Getting started",
+                        "pages": ["index", "quickstart", "weaver/quickstart-weaver", "development"]
+                    },
+                    {
+                        "group": "Architecture",
+                        "pages": [
+                            "weaver/architecture",
+                            "weaver/blueprint",
+                            "weaver/agentfs-turso",
+                            "weaver/frontend-wiring",
+                            "weaver/environment"
+                        ]
+                    },
+                    {
+                        "group": "Platform",
+                        "pages": [
+                            "weaver/authentication",
+                            "weaver/databases",
+                            "weaver/storage",
+                            "weaver/triggers",
+                            "weaver/type-generation",
+                            "weaver/terraform"
+                        ]
+                    },
+                    {
+                        "group": "Orchestration",
+                        "pages": ["weaver/orchestration", "weaver/beep-swarm", "weaver/crewai", "weaver/api"]
+                    },
+                    {
+                        "group": "Operations",
+                        "pages": ["weaver/cicd", "weaver/nextjs", "weaver/guides", "weaver/economy"]
+                    }
+                ]
+            },
+            {
+                "tab": "API",
+                "groups": [
+                    {
+                        "group": "Nexus & Appwrite",
+                        "pages": ["weaver/api", "api-reference/introduction"]
+                    }
+                ]
+            }
+        ],
+        "global": {
+            "anchors": [
+                {
+                    "anchor": "Weaver IDE",
+                    "href": "https://github.com/seemslegit42/ide",
+                    "icon": "github"
+                },
+                {
+                    "anchor": "Docs source",
+                    "href": "https://github.com/seemslegit42/docs",
+                    "icon": "book"
+                }
+            ]
+        }
+    },
+    "logo": {
+        "light": "/logo/light.svg",
+        "dark": "/logo/dark.svg"
+    },
+    "navbar": {
+        "links": [
+            {
+                "label": "GitHub",
+                "href": "https://github.com/seemslegit42/ide"
+            }
+        ],
+        "primary": {
+            "type": "button",
+            "label": "Run locally",
+            "href": "http://localhost:3000"
+        }
+    },
+    "contextual": {
+        "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
+    },
+    "footer": {
+        "socials": {
+            "github": "https://github.com/seemslegit42/ide"
+        }
     }
-  },
-  "logo": {
-    "light": "/logo/light.svg",
-    "dark": "/logo/dark.svg"
-  },
-  "navbar": {
-    "links": [
-      {
-        "label": "GitHub",
-        "href": "https://github.com/seemslegit42/ide"
-      }
-    ],
-    "primary": {
-      "type": "button",
-      "label": "Run locally",
-      "href": "http://localhost:3000"
-    }
-  },
-  "contextual": {
-    "options": ["copy", "view", "chatgpt", "claude", "perplexity", "mcp", "cursor", "vscode"]
-  },
-  "footer": {
-    "socials": {
-      "github": "https://github.com/seemslegit42/ide"
-    }
-  }
 }

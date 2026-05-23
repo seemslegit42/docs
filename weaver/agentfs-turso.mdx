@@ -3,7 +3,7 @@ title: "AgentFS on Turso"
 description: "Agent sandbox memory on Turso libSQL"
 ---
 
-> Canonical third pillar of the Persistence Trinity.  
+> Canonical third pillar of the Persistence Trinity.
 > Official docs index: https://docs.turso.tech/llms.txt
 
 ## What AgentFS is
@@ -29,7 +29,17 @@ SDKs: [TypeScript](https://docs.turso.tech/agentfs/sdk/typescript), [Python](htt
 | AgentFS CLI / Nexus `ignite.py`, `/api/v1/agentfs/*` | CoW sandboxes, session VFS |
 | `src/db/turso.ts` | libSQL client—vectors, CDC, embeddings schema |
 | `src/services/vector-store.ts`, `ai-memory.ts`, `code-indexer.ts` | RAG and agent memory |
-| `NEXT_PUBLIC_TURSO_DATABASE_URL`, `NEXT_PUBLIC_TURSO_AUTH_TOKEN` | Turso connection |
+| `src/components/canvas/agentfs-sandbox-bar.tsx` | Pull/push/checkpoint on canvas |
+| `src/components/panels/artifact-codex.tsx` | Files + audit tabs (AgentFS) |
+| `src/hooks/use-agentfs-session.ts` | Auto-init sandbox from `workflowId` |
+| Nexus `/api/v1/agentfs/*` | Session init, timeline, sync |
+| `nexus/engine/swarm.py` | `SovereignSession.ensure_session()` before weave |
+
+## Frontend entry points
+
+- **Dock → AgentFS Codex** — `panels.codex` → Artifact Codex
+- **Canvas overlay** — AgentFS sandbox bar on `WorkflowCanvas`
+- **Bedrock slice** — `pullSubstrateChanges` / `pushSubstrateChanges` in store
 
 ## What Turso is *not*
 

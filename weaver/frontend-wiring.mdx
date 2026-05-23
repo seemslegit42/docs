@@ -1,0 +1,113 @@
+---
+title: "Frontend wiring"
+description: "Routes, panels, registries, and Nexus API conduits"
+---
+
+Weaver Studio is a Next.js App Router client. All product UI flows through a small set of **shell components** that lazy-load panels and registries. Backend calls go through **`src/services/api.ts`** (`apiService` → `/api/v1/*` proxy).
+
+## App routes
+
+| Route | File | Purpose |
+| :---- | :--- | :------ |
+| `/` | `src/app/page.tsx` | Landing / auth gateway |
+| `/canvas` | `src/app/canvas/page.tsx` | **Primary IDE** — workflow canvas, HUD, dock |
+| `/dashboard` | `src/app/dashboard/page.tsx` | Metrics hub + registry overlays |
+| `/observatory` | `src/app/observatory/page.tsx` | Whole-app environment checklist |
+| `/login`, `/signup`, … | `src/app/*/page.tsx` | Appwrite auth rituals |
+
+Auth pages and canvas/dashboard both mount **`SubstrateInitializer`** (identity sync + Nexus prefetch).
+
+## Request path to Nexus
+
+```text
+Browser (apiService)
+  → GET/POST /api/v1/...
+  → next.config.ts rewrite
+  → http://localhost:8001/api/v1/...
+  → nexus/router_registry.py
+```
+
+Server-only paths (not proxied):
+
+| Path | Handler |
+| :--- | :------ |
+| `/api/observatory` | `src/app/api/observatory/route.ts` — env planes + stack probes |
+| `/api/vectors/*` | Turso vector helpers (Next route handlers) |
+
+Server actions: `src/app/actions/nexus.ts`, `collaboration.ts` → `src/services/nexus-server.ts`.
+
+## UI shell (canvas & dashboard)
+
+```text
+SidebarProvider + Sidebar          ← registries, global rituals
+Header / Footer
+WorkflowCanvas (React Flow)        ← /canvas only
+HudLayout                          ← panel blades (palette, console, codex, …)
+OverlayManager                     ← full-screen registries + modals
+SovereignDock                      ← command bar + quick tools
+BeepAvatar                         ← opens AssistantPanel
+```
+
+### Registry tabs (`activeRegistryTab`)
+
+Opened from **Sidebar → Registries** or the command bar. Rendered by **`OverlayManager`**:
+
+| Tab ID | Component |
+| :----- | :-------- |
+| `agents` | `registries/agent-registry` |
+| `create-agent` | `agents/agent-form` |
+| `automations` | `registries/automation-registry` |
+| `skills` | `registries/skill-registry` |
+| `toolkits` | `registries/toolkit-registry` |
+| `knowledge` | `registries/knowledge-registry` |
+| `models` | `registries/model-registry` |
+| `sensors` | `registries/trigger-registry` |
+| `apm` | `apm/performance-metrics` |
+| `constitution` | `registries/constitution-registry` |
+| `management` | `registries/user-management` |
+
+### HUD panels (`togglePanel`)
+
+Rendered by **`HudLayout`** as resizable blades:
+
+| Panel key | Component | Typical trigger |
+| :-------- | :-------- | :-------------- |
+| `palette` | `panels/palette-panel` | Dock → Instruments |
+| `console` | `panels/console-panel` | Default open; includes **AI Debug** tab |
+| `codex` | `panels/artifact-codex` | Dock → AgentFS Codex |
+| `disclaimer` | `panels/comic-disclaimer` | Dock → Aegis Guardian |
+| `glasshouse` | `simulation/simulation-protocol` | Command `/glasshouse` |
+| `library` | `panels/library-panel` | Dock / command `/library` |
+| `marketplace` | `panels/marketplace-panel` | Sidebar Bazaar |
+| `settings` | `panels/settings-panel` | Sidebar Calibration |
+| `assistant` | `command/assistant-panel` | Beep avatar |
+
+### State
+
+Global UI state: **`src/store/`** (Zustand) — `ui-slice.ts` (`panels`, `activeRegistryTab`), `execution-slice.ts` (weave, debug), `bedrock-slice.ts` (AgentFS sync), `collaboration-slice.ts`.
+
+On auth, **`SubstrateInitializer`** prefetches automations, marketplace, substrate functions, and AgentFS sync stats via `apiService`.
+
+## AgentFS on canvas
+
+| Piece | Path |
+| :---- | :--- |
+| Client | `src/services/agentfs.ts`, `src/services/api.ts` |
+| Hook | `src/hooks/use-agentfs-session.ts` |
+| Sandbox bar | `src/components/canvas/agentfs-sandbox-bar.tsx` |
+| Codex panel | `src/components/panels/artifact-codex.tsx` |
+| Backend | `nexus/controllers/agentfs.py`, `nexus/engine/swarm.py` |
+
+## Purged / optional modules
+
+These files exist but are **not** mounted in the shell (stubs or shadcn primitives):
+
+- `function-registry.tsx`, `api-service.ts` — marked `Purged`; use Settings → Filaments and `api.ts`.
+- `beep-assistant.tsx` — superseded by `AssistantPanel`.
+- Unused shadcn primitives (`accordion`, `chart`, …) — import when a feature needs them.
+
+## Related
+
+- [API conduits](/weaver/api) — endpoint registry
+- [AgentFS on Turso](/weaver/agentfs-turso)
+- [Environment](/weaver/environment) — `/observatory` and `.env` planes
