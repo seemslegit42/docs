@@ -1,0 +1,569 @@
+---
+title: "Backend API reference"
+description: "Comprehensive reference for the Nexus backend endpoints, auth methods, payloads, responses, and error codes."
+---
+
+# Backend API Reference
+
+This page documents the Nexus backend mounted under `/api/v1`.
+
+## Base URLs
+
+| Surface | URL |
+| :-- | :-- |
+| Nexus backend | `http://localhost:8001/api/v1` |
+| App root | `http://localhost:8001/` |
+| Health | `http://localhost:8001/health` |
+| API health | `http://localhost:8001/api/v1/health` |
+
+## Authentication
+
+The backend uses a mix of auth gates:
+
+| Auth method | Meaning |
+| :-- | :-- |
+| `check_auth` | JWT or session-gated current-user access |
+| `get_current_user` | Current authenticated user is required |
+| `get_user_organisation` | Authenticated user plus organisation scope |
+| `validate_api_key` | API key authentication for public agent endpoints |
+| `_require_task_delegator` | Custom task-delegator gate using `X-Nexus-Delegator-Role` with allowed values `architect` and `forgemaster` |
+| none | Public or server-side admin-plane route |
+
+Unless otherwise noted, request and response bodies are JSON.
+
+## Common Errors
+
+| Status | Meaning |
+| :-- | :-- |
+| `400` | Validation error, missing configuration, unsupported request, or failed external dependency |
+| `401` | Authentication missing or invalid |
+| `403` | Authenticated but not authorized, often organisation or role mismatch |
+| `404` | Resource not found |
+| `409` | Conflict, usually when a state transition is invalid |
+| `422` | FastAPI request validation failure |
+| `500` | Unhandled server-side error |
+| `502` | Downstream sync or command execution failure |
+| `503` | Service unavailable, used in a few diagnostic endpoints |
+
+## App-Level Routes
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/` | none | none | `{status, phi_alignment, identity, version, routers}` | none |
+| `GET` | `/health` | none | none | `{status: "healthy"}` | none |
+| `GET` | `/api/v1/health` | none | none | `{status: "healthy", routers}` | none |
+
+## Agent Runtime
+
+### `nexus/controllers/agent.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/agents/create` | `check_auth` | `AgentConfigInput` | `{id, execution_id, name}` | `404` for missing project/tools |
+| `GET` | `/api/v1/agents/get/project/{project_id}` | `check_auth` | `project_id` path parameter | list of agent dicts | `404` for missing project |
+| `PUT` | `/api/v1/agents/delete/{agent_id}` | `check_auth` | `agent_id` path parameter | `{success, status}` | `404` for missing agent |
+
+### `nexus/controllers/agent_execution.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/agent_executions/add` | `check_auth` | `AgentRunIn` | `AgentExecutionOut` | `404` for missing agent/execution |
+| `GET` | `/api/v1/agent_executions/get/{agent_execution_id}` | `check_auth` | `agent_execution_id` path parameter | `AgentExecutionOut` | `404` for missing execution |
+| `GET` | `/api/v1/agent_executions/get/agent/{agent_id}` | `check_auth` | `agent_id` path parameter | list of execution dicts | `404` for missing agent |
+
+### `nexus/controllers/agent_execution_feed.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/agent_execution_feeds/add` | `check_auth` | `AgentExecutionFeedIn` | `AgentExecutionFeedOut` | `400` for missing run |
+| `GET` | `/api/v1/agent_execution_feeds/get/{id}` | `check_auth` | `id` path parameter | `AgentExecutionFeedOut` | `404` for missing feed |
+| `PUT` | `/api/v1/agent_execution_feeds/update/{id}` | `check_auth` | `AgentExecutionFeedIn` | `AgentExecutionFeedOut` | `404` for missing feed |
+| `GET` | `/api/v1/agent_execution_feeds/get/execution/{agent_execution_id}` | `check_auth` | `agent_execution_id` path parameter | `{status, feeds, permissions, waiting_period, errors}` | `404` for missing execution |
+| `GET` | `/api/v1/agent_execution_feeds/get/tasks/{agent_execution_id}` | `check_auth` | `agent_execution_id` path parameter | `{tasks, completed_tasks}` | `404` for missing execution |
+
+### `nexus/controllers/agent_execution_permission.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/agent_execution_permissions/get/{id}` | `check_auth` | `id` path parameter | ORM object | `404` for missing permission |
+| `POST` | `/api/v1/agent_execution_permissions/add` | `check_auth` | `AgentExecutionPermissionIn` | `AgentExecutionPermissionOut` | `400` for invalid request |
+| `PATCH` | `/api/v1/agent_execution_permissions/update/{id}` | `check_auth` | `AgentExecutionPermissionIn` | `AgentExecutionPermissionIn` | `404` for missing permission |
+| `PUT` | `/api/v1/agent_execution_permissions/update/status/{id}` | `check_auth` | body fields `status`, `user_feedback` | `{success: true}` | `400` for missing status |
+
+### `nexus/controllers/agent_execution_config.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/agent_execution_configs/details/agent_id/{agent_id}/agent_execution_id/{agent_execution_id}` | `check_auth` | `agent_id`, `agent_execution_id` path parameters | execution-config dict | `404` for undefined IDs, missing resources, or mismatched agent |
+
+### `nexus/controllers/api/agent.py` public agent API
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/public/agents` | `validate_api_key` | `AgentConfigExtInput` | `{agent_id}` | `404`, `409` for invalid state |
+| `POST` | `/api/v1/public/agents/{agent_id}/run` | `validate_api_key` | `AgentExecutionIn` | `{run_id}` | `404`, `409` |
+| `PUT` | `/api/v1/public/agents/{agent_id}` | `validate_api_key` | `AgentConfigExtInput` | `{agent_id}` | `404`, `409` |
+| `POST` | `/api/v1/public/agents/{agent_id}/run-status` | `validate_api_key` | `RunFilterConfigIn` | list of `{run_id, status}` | none explicit |
+| `POST` | `/api/v1/public/agents/{agent_id}/pause` | `validate_api_key` | `ExecutionStateChangeConfigIn` | `{result: "success"}` | none explicit |
+| `POST` | `/api/v1/public/agents/{agent_id}/resume` | `validate_api_key` | `ExecutionStateChangeConfigIn` | `{result: "success"}` | none explicit |
+| `POST` | `/api/v1/public/agents/resources/output` | `validate_api_key` | `RunIDConfig` | S3 download payload | `400` if S3 missing, `401` invalid S3 credentials |
+
+### `nexus/controllers/agent_template.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/agent_templates/get/{agent_template_id}` | `get_user_organisation` | `template_source` query parameter | local template dict or marketplace template object | `404` template missing |
+| `PUT` | `/api/v1/agent_templates/update_agent_template/{agent_template_id}` | `get_user_organisation` | body `dict` | no explicit body | `404` template missing |
+| `POST` | `/api/v1/agent_templates/save_agent_as_template/agent_id/{agent_id}/agent_execution_id/{agent_execution_id}` | `get_user_organisation` | path parameters | `agent_template.to_dict()` | `404` missing agent/execution |
+| `GET` | `/api/v1/agent_templates/list` | `get_user_organisation` | none | list of local or marketplace templates | none explicit |
+| `GET` | `/api/v1/agent_templates/marketplace/list` | none | none | marketplace template list | none explicit |
+| `GET` | `/api/v1/agent_templates/marketplace/template_details/{agent_template_id}` | none | path parameter | template detail dict | `404` template missing |
+| `POST` | `/api/v1/agent_templates/download` | `get_user_organisation` | body `agent_template_id` | `agent_template.to_dict()` | `404` template missing |
+| `GET` | `/api/v1/agent_templates/agent_config` | `get_user_organisation` | none | normalized config dict | none explicit |
+| `POST` | `/api/v1/agent_templates/publish_template/agent_execution_id/{agent_execution_id}` | `get_current_user` + `get_user_organisation` | path parameter | `agent_template.to_dict()` | `404` missing execution/workflow |
+| `POST` | `/api/v1/agent_templates/publish_template` | `get_current_user` + `get_user_organisation` | `AgentPublish` | `agent_template.to_dict()` | `404` missing execution/workflow |
+
+### `nexus/controllers/agent_workflow.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/agent_workflows/list` | `get_user_organisation` | none | workflow list | none explicit |
+
+## AgentFS and Realtime
+
+### `nexus/controllers/agentfs.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/agentfs/session/{session_id}` | none explicit in controller | `session_id` path parameter | session status dict | `500` session issues |
+| `POST` | `/api/v1/agentfs/session/{session_id}/init` | none explicit | `SessionInit` | `{status: READY, ...}` | `500` |
+| `GET` | `/api/v1/agentfs/content/{session_id}` | none explicit | `session_id` path parameter | list of `Artifact` | `500` |
+| `GET` | `/api/v1/agentfs/content/{session_id}/file` | none explicit | query path parameters | `{path, content}` | `404` missing file |
+| `GET` | `/api/v1/agentfs/timeline/{session_id}` | none explicit | `limit` query parameter | timeline list | `500` |
+| `GET` | `/api/v1/agentfs/stats/{session_id}` | none explicit | `session_id` path parameter | merged status/stats dict | `500` |
+| `GET` | `/api/v1/agentfs/diff/{session_id}` | none explicit | `session_id` path parameter | diff text or CLI-not-installed marker | `500` |
+| `POST` | `/api/v1/agentfs/sync/{session_id}/pull` | none explicit | none | sync status/log dict | `502` on command failure |
+| `POST` | `/api/v1/agentfs/sync/{session_id}/push` | none explicit | none | sync status/log dict | `502` |
+| `POST` | `/api/v1/agentfs/sync/{session_id}/checkpoint` | none explicit | none | sync status/log dict | `502` |
+| `GET` | `/api/v1/agentfs/sync/{session_id}/stats` | none explicit | none | sync stats | `500` |
+
+### `nexus/controllers/realtime.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `WebSocket` | `/api/v1/realtime/synapse` | none explicit | messages such as `subscribe`, `cursor_move`, `node_move`, `node_update`, `ping` | Redis-backed broadcast events | connection-level failures |
+
+## Task Delegation
+
+### `nexus/controllers/task_delegation.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/task_delegations/setup` | `check_auth` + `_require_task_delegator` | none | `{status: READY}` | `401` missing user, `403` invalid delegator role |
+| `GET` | `/api/v1/task_delegations/tasks` | `check_auth` + `_require_task_delegator` | `status` query parameter | `{tasks: [...]}` | `401`, `403` |
+| `POST` | `/api/v1/task_delegations/tasks/assign` | `check_auth` + `_require_task_delegator` | `TaskDelegationCreateIn` | task assignment record | `401`, `403` |
+| `PATCH` | `/api/v1/task_delegations/tasks/{task_id}/progress` | `check_auth` + `_require_task_delegator` | `TaskProgressIn` | progress update record | `401`, `403`, `404` |
+| `POST` | `/api/v1/task_delegations/tasks/{task_id}/complete` | `check_auth` + `_require_task_delegator` | `TaskCompletionIn` | completion record | `401`, `403`, `404` |
+
+## Identity, Org, and Governance
+
+### `nexus/controllers/account.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/account` | none explicit | none | Appwrite account payload | `500` |
+| `GET` | `/api/v1/account/logs` | none explicit | none | account activity ledger | `500` |
+| `GET` | `/api/v1/account/prefs` | none explicit | none | account preferences | `500` |
+| `PATCH` | `/api/v1/account/prefs` | none explicit | `dict[str, Any]` | updated prefs payload | `500` |
+| `GET` | `/api/v1/account/sessions` | none explicit | none | session list | `500` |
+| `DELETE` | `/api/v1/account/sessions/{session_id}` | none explicit | `session_id` path parameter | `{status: "PURGED", identity}` | `500` |
+| `DELETE` | `/api/v1/account/sessions` | none explicit | none | `{status: "TOTAL_PURGE_COMPLETE"}` | `500` |
+
+### `nexus/controllers/api_key.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/api_keys` | `check_auth` + org scope | embedded `name` body field | `{api_key, status}` | `500` |
+| `GET` | `/api/v1/api_keys/validate` | `validate_api_key` | none | `{success: True, signature: "Φ_VALID"}` | none explicit |
+| `GET` | `/api/v1/api_keys` | `check_auth` + org scope | none | API-key rows | `500` |
+| `DELETE` | `/api/v1/api_keys/{api_key_id}` | `check_auth` | `api_key_id` path parameter | `{success: True, status: "PURGED"}` | `404` `SIGIL_NOT_FOUND` |
+
+### `nexus/controllers/auth_tokens.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/auth_tokens/manifest` | none explicit | `TokenRequest` | `{status, token_id, user_id, secret, expire}` | `500` |
+| `DELETE` | `/api/v1/auth_tokens/{user_id}/{token_id}` | none explicit | path parameters | `{status, identity, token}` | `500` |
+
+### `nexus/controllers/user.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/users/add` | `check_auth` | `UserIn` | `UserOut` | `422` for missing fields |
+| `GET` | `/api/v1/users/get/{user_id}` | `check_auth` | `user_id` path parameter | `UserOut` | `404` user not found |
+| `PUT` | `/api/v1/users/update/{user_id}` | `check_auth` | `UserBase` | `UserOut` | `404` |
+| `POST` | `/api/v1/users/first_login_source/{source}` | `check_auth` | `source` path parameter | user object | none explicit |
+
+### `nexus/controllers/organisation.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/organisations/add` | `check_auth` | `OrganisationIn` | `OrganisationOut` | `400`, `404` |
+| `GET` | `/api/v1/organisations/get/{organisation_id}` | `check_auth` | `organisation_id` path parameter | `OrganisationOut` | `404` |
+| `PUT` | `/api/v1/organisations/update/{organisation_id}` | `check_auth` | `OrganisationIn` | `OrganisationOut` | `404` |
+| `GET` | `/api/v1/organisations/get/user/{user_id}` | none explicit | `user_id` path parameter | `OrganisationOut` | `201` status code on success |
+| `GET` | `/api/v1/organisations/llm_models` | org scoped | none | list of model names | `400` |
+| `GET` | `/api/v1/organisations/agent_workflows` | org scoped | none | list of workflow names | `400` |
+
+### `nexus/controllers/project.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/projects/add` | `check_auth` | `ProjectIn` | `ProjectOut` | `404` |
+| `GET` | `/api/v1/projects/get/{project_id}` | `check_auth` | `project_id` | `ProjectOut` | `404` |
+| `PUT` | `/api/v1/projects/update/{project_id}` | `check_auth` | `ProjectIn` | `ProjectOut` | `404` |
+| `GET` | `/api/v1/projects/get/organisation/{organisation_id}` | `check_auth` | `organisation_id` path parameter | list of projects; auto-creates default project when needed | `404` |
+
+### `nexus/controllers/config.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/config/add/organisation/{organisation_id}` | `check_auth` | `ConfigurationIn` | `ConfigurationOut` | `404` |
+| `GET` | `/api/v1/config/get/organisation/{organisation_id}/key/{key}` | `check_auth` | path parameters | one config row or auto-seeded model API key | `404` |
+| `GET` | `/api/v1/config/get/organisation/{organisation_id}` | `check_auth` | path parameter | list of configs | `404` |
+| `GET` | `/api/v1/config/get/env` | none explicit | none | `{env}` | none |
+
+### `nexus/controllers/budget.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/budget/add` | `check_auth` | `BudgetIn` | `BudgetOut` | `404` |
+| `GET` | `/api/v1/budget/get/{budget_id}` | `check_auth` | `budget_id` | `BudgetOut` | `404` |
+| `PUT` | `/api/v1/budget/update/{budget_id}` | `check_auth` | `BudgetIn` | `BudgetOut` | `404` |
+
+### `nexus/controllers/blueprint.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/blueprints` | org scoped | none | list of blueprint dicts | `404` missing blueprint |
+| `POST` | `/api/v1/blueprints` | org scoped | `BlueprintCreate` | `{status: "ARCHIVED", id}` | `404` |
+| `DELETE` | `/api/v1/blueprints/{blueprint_id}` | org scoped | `blueprint_id` | `{status: "PURGED"}` | `404` |
+
+### `nexus/controllers/compliance.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/compliance/logs` | org scoped | none | list of audit dicts | none explicit |
+| `GET` | `/api/v1/compliance/summary` | org scoped | none | `{total_audits, active_violations, status, phi_potential}` | none explicit |
+
+### `nexus/controllers/decree.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/decrees/setup` | none explicit | none | substrate init result | `500` |
+| `POST` | `/api/v1/decrees/manifest` | none explicit | `DecreeIn` | decree creation result | `500` |
+| `GET` | `/api/v1/decrees/scry/{database_id}/{table_id}` | none explicit | path parameters | list of decrees | `500` |
+| `GET` | `/api/v1/decrees/functions` | none explicit | none | list of functions | `500` |
+| `POST` | `/api/v1/decrees/functions` | none explicit | `FunctionIn` | function creation result | `500` |
+| `GET` | `/api/v1/decrees/functions/{function_id}` | none explicit | `function_id` | function details | `404`, `500` |
+| `PATCH` | `/api/v1/decrees/functions/{function_id}` | none explicit | `FunctionUpdateIn` | updated function | `404`, `500` |
+| `DELETE` | `/api/v1/decrees/functions/{function_id}` | none explicit | `function_id` | delete result | `404`, `500` |
+| `POST` | `/api/v1/decrees/functions/{function_id}/executions` | none explicit | optional embedded body | execution result | `404`, `500` |
+| `GET` | `/api/v1/decrees/functions/{function_id}/executions` | none explicit | `function_id` | execution history | `404`, `500` |
+
+### `nexus/controllers/developer.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/developer/sdk/artifacts` | none explicit | none | list of `SDKArtifact` | none explicit |
+| `POST` | `/api/v1/developer/debug-assist` | none explicit | `DebugAssistRequest` | root-cause analysis payload | `503` on `ValueError`, `500` otherwise |
+| `POST` | `/api/v1/developer/completion` | none explicit | embedded body fields `nodeType`, `currentContext`, `architectIntent` | `{status, data.suggestions, data.reasoning}` | `500` |
+| `GET` | `/api/v1/developer/terraform/export` | none explicit | none | `{status, filename, hcl}` | `500` |
+| `GET` | `/api/v1/developer/endpoints` | none explicit | none | inventory of three high-privilege API paths | none explicit |
+
+### `nexus/controllers/functions.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/functions` | none explicit | optional `search` query parameter | list of functions | `500` |
+| `POST` | `/api/v1/functions` | none explicit | `FunctionCreateIn` | created function payload | `500` |
+| `GET` | `/api/v1/functions/runtimes` | none explicit | none | list of runtimes | `500` |
+
+### `nexus/controllers/infrastructure.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/infrastructure/buckets` | none explicit | none | list of buckets | `500` |
+| `POST` | `/api/v1/infrastructure/buckets` | none explicit | `BucketIn` | bucket result | `500` |
+| `DELETE` | `/api/v1/infrastructure/buckets/{bucket_id}` | none explicit | `bucket_id` | delete result | `500` |
+| `GET` | `/api/v1/infrastructure/buckets/{bucket_id}/files` | none explicit | `bucket_id` | file list | `500` |
+| `DELETE` | `/api/v1/infrastructure/buckets/{bucket_id}/files/{file_id}` | none explicit | path parameters | delete result | `500` |
+| `GET` | `/api/v1/infrastructure/sites` | none explicit | none | list of sites | `500` |
+| `POST` | `/api/v1/infrastructure/sites` | none explicit | `SiteIn` | site result | `500` |
+| `DELETE` | `/api/v1/infrastructure/sites/{site_id}` | none explicit | `site_id` | delete result | `500` |
+
+### `nexus/controllers/klepsydra_controller.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/klepsydra/calculate_outcome` | `get_current_user` | `OutcomeRequest` | `{transactionId, outcomeTier, boonAmount, boonPayload, narrativeTrigger, updatedLseCounter}` | `500` |
+| `GET` | `/api/v1/klepsydra/tribute-logs` | `get_current_user` | none | last 50 `TributeLog` rows | none explicit |
+| `GET` | `/api/v1/klepsydra/profile` | `get_current_user` | none | `PulseProfile` | `404` profile not materialized |
+
+### `nexus/controllers/models_controller.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/models/store_api_keys` | org scoped | `ValidateAPIKeyRequest` | stored-key result | `500` |
+| `GET` | `/api/v1/models/get_api_keys` | org scoped | none | stored API keys | `500` |
+| `GET` | `/api/v1/models/fetch_models` | org scoped | none | model catalog entries | `500` |
+| `GET` | `/api/v1/models/get/list` | org scoped | none | marketplace models with install details | `500` |
+
+### `nexus/controllers/marketplace_stats.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/marketplace_stats/knowledge/downloads/{knowledge_id}` | none explicit | `knowledge_id` | download stats payload | none explicit |
+
+### `nexus/controllers/knowledge_configs.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/knowledge_configs/marketplace/details/{knowledge_id}` | none explicit | `knowledge_id` | list of `KnowledgeConfigs` | none explicit |
+
+### `nexus/controllers/knowledges.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/knowledges/get/list` | org scoped | `page` query parameter | marketplace knowledge list with install metadata | `400`, `404` |
+| `GET` | `/api/v1/knowledges/marketplace/list/{page}` | none explicit | `page` | marketplace rows | `400`, `404` |
+| `GET` | `/api/v1/knowledges/user/list` | org scoped | none | user knowledge list | none explicit |
+| `GET` | `/api/v1/knowledges/marketplace/get/details/{knowledge_name}` | none explicit | `knowledge_name` | merged knowledge/config dict | `404` |
+| `GET` | `/api/v1/knowledges/marketplace/details/{knowledge_name}` | none explicit | `knowledge_name` | ORM object | `404` |
+| `GET` | `/api/v1/knowledges/user/get/details/{knowledge_id}` | none explicit | `knowledge_id` | merged knowledge/index/vector-db dict | `404` |
+| `POST` | `/api/v1/knowledges/add_or_update/data` | org scoped | body `dict` | `{id}` | `400`, `500` |
+| `POST` | `/api/v1/knowledges/delete/{knowledge_id}` | none explicit | `knowledge_id` | no explicit body | `404` |
+| `GET` | `/api/v1/knowledges/install/{knowledge_name}/index/{vector_db_index_id}` | org scoped | path parameters | install result or no explicit body | `400`, `404` |
+| `POST` | `/api/v1/knowledges/uninstall/{knowledge_name}` | org scoped | `knowledge_name` | uninstall result or no explicit body | `400`, `404` |
+
+### `nexus/controllers/resources.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/resources/add/{agent_id}` | `check_auth` | multipart `file`, `name`, `size`, `type` | `Resource` ORM row | `400`, `403`, `500` |
+| `GET` | `/api/v1/resources/get/all/{agent_id}` | `check_auth` | `agent_id` | list of resources | `403`, `500` |
+| `GET` | `/api/v1/resources/get/{resource_id}` | `check_auth` | `resource_id` | `FileResponse` or `StreamingResponse` | `400`, `403`, `404`, `500` |
+
+### `nexus/controllers/tool.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/tools/add` | `check_auth` | `ToolIn` | `ToolOut` | `404` |
+| `GET` | `/api/v1/tools/get/{tool_id}` | `check_auth` | `tool_id` | `ToolOut` | `404` |
+| `GET` | `/api/v1/tools/list` | org scoped | none | tool list | none explicit |
+| `PUT` | `/api/v1/tools/update/{tool_id}` | `check_auth` | `ToolIn` | `ToolOut` | `404` |
+
+### `nexus/controllers/tool_config.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/tool_configs/add/{toolkit_name}` | org scoped | list of configs | encrypted tool-config update result | `403`, `404`, `500` |
+| `POST` | `/api/v1/tool_configs/create-or-update/{toolkit_name}` | `check_auth` | `tool_configs:list` | `ToolConfigOut` | `403`, `404`, `500` |
+| `GET` | `/api/v1/tool_configs/get/toolkit/{toolkit_name}` | org scoped | `toolkit_name` | list of decrypted `ToolConfig` rows | `403`, `404` |
+| `GET` | `/api/v1/tool_configs/get/toolkit/{toolkit_name}/key/{key}` | org scoped | `toolkit_name`, `key` | one config row | `403`, `404` |
+
+### `nexus/controllers/toolkit.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/toolkits/marketplace/list/{page}` | none explicit | `page` | marketplace toolkit list | `404` |
+| `GET` | `/api/v1/toolkits/marketplace/details/{toolkit_name}` | none explicit | `toolkit_name` | toolkit details | `404` |
+| `GET` | `/api/v1/toolkits/marketplace/readme/{toolkit_name}` | none explicit | `toolkit_name` | readme content | `404` |
+| `GET` | `/api/v1/toolkits/marketplace/tools/{toolkit_name}` | none explicit | `toolkit_name` | toolkit tools | `404` |
+| `GET` | `/api/v1/toolkits/get/install/{toolkit_name}` | org scoped | `toolkit_name` | install metadata | `404` |
+| `GET` | `/api/v1/toolkits/get/toolkit_name/{toolkit_name}` | org scoped | `toolkit_name` | toolkit object | `404` |
+| `GET` | `/api/v1/toolkits/get/readme/{toolkit_name}` | org scoped | `toolkit_name` | readme content | `404` |
+| `GET` | `/api/v1/toolkits/get/list` | org scoped | none | toolkit list | none explicit |
+| `GET` | `/api/v1/toolkits/get/local/list` | org scoped | none | local toolkit list | none explicit |
+| `GET` | `/api/v1/toolkits/check_update/{toolkit_name}` | org scoped | `toolkit_name` | update check result | `404` |
+| `PUT` | `/api/v1/toolkits/update/{toolkit_name}` | org scoped | toolkit update payload | update result | `404` |
+| `GET` | `/api/v1/toolkits/get` | none explicit | `search_str` or `toolkit_name` query parameter | toolkit search result | none explicit |
+| `POST` | `/api/v1/toolkits/get/local/install` | `check_auth` + org scope | `GitHubLinkRequest` | `200` with no body | `400` invalid GitHub link |
+
+### `nexus/controllers/vector_dbs.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/vector_dbs/get/list` | none explicit | none | marketplace vector DB list | none explicit |
+| `GET` | `/api/v1/vector_dbs/marketplace/list` | none explicit | none | marketplace rows | none explicit |
+| `GET` | `/api/v1/vector_dbs/user/list` | org scoped | none | org vector DB list | none explicit |
+| `GET` | `/api/v1/vector_dbs/db/details/{vector_db_id}` | none explicit | `vector_db_id` | merged vector-db/config/indices dict | `404` |
+| `POST` | `/api/v1/vector_dbs/delete/{vector_db_id}` | none explicit | `vector_db_id` | delete result | `404` |
+| `POST` | `/api/v1/vector_dbs/connect/pinecone` | org scoped | body `dict` | `{id, name}` | `400`, `500` |
+| `POST` | `/api/v1/vector_dbs/connect/qdrant` | org scoped | body `dict` | `{id, name}` | `400`, `500` |
+| `POST` | `/api/v1/vector_dbs/connect/weaviate` | org scoped | body `dict` | `{id, name}` | `400`, `500` |
+| `PUT` | `/api/v1/vector_dbs/update/vector_db/{vector_db_id}` | body `new_indices:list` | update result | `404`, `400` |
+
+### `nexus/controllers/vector_db_indices.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/indices/marketplace/valid_indices/{knowledge_name}` | org scoped | `knowledge_name` | valid indices list | none explicit |
+| `GET` | `/api/v1/indices/user/valid_indices` | org scoped | none | valid indices list | none explicit |
+
+### `nexus/controllers/webhook.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/webhooks/add` | `check_auth` + org scope | `WebHookIn` | `WebHookOut` | `404` |
+| `GET` | `/api/v1/webhooks/get` | `check_auth` + org scope | none | `WebHookOut or None` | none explicit |
+| `POST` | `/api/v1/webhooks/edit/{webhook_id}` | `check_auth` + org scope | `WebHookEdit` | `WebHookOut` | `404` |
+
+### `nexus/controllers/google_oauth.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/google/oauth-tokens` | none explicit | `code`, `state` query parameters | redirect to frontend | `400` invalid client secret |
+| `POST` | `/api/v1/google/send_google_creds/toolkit_id/{toolkit_id}` | `check_auth` | body `dict` | `bool` | `400` |
+| `GET` | `/api/v1/google/get_google_creds/toolkit_id/{toolkit_id}` | none explicit | `toolkit_id` | `{client_id}` | none explicit |
+
+### `nexus/controllers/twitter_oauth.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/twitter/oauth-tokens` | none explicit | `oauth_token`, `oauth_verifier` query parameters | redirect to frontend | none explicit |
+| `POST` | `/api/v1/twitter/send_twitter_creds/{twitter_creds}` | `check_auth` | `twitter_creds` path parameter | `bool` | none explicit |
+| `GET` | `/api/v1/twitter/get_twitter_creds/toolkit_id/{toolkit_id}` | none explicit | `toolkit_id` | request-token response data | none explicit |
+
+### `nexus/controllers/automation.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/automations/list` | `check_auth` + org scope | none | automation dict list | none explicit |
+| `POST` | `/api/v1/automations/deploy` | `check_auth` + org scope | `DeployRequest` | automation dict | none explicit |
+| `GET` | `/api/v1/automations/remote/status/{automation_id}/{kickoff_id}` | `check_auth` + org scope | path parameters | proxied remote status JSON | `400` for non-AMP automations, `500` remote failures |
+| `DELETE` | `/api/v1/automations/{automation_id}` | `check_auth` + org scope | `automation_id` | `{status: "PURGED"}` | none explicit |
+
+### `nexus/controllers/analytics.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/analytics/metrics` | `get_user_organisation` | none | org metrics payload | `500` |
+| `GET` | `/api/v1/analytics/agents/all` | `get_user_organisation` | none | agent analytics list | `500` |
+| `GET` | `/api/v1/analytics/agents/{agent_id}` | `get_user_organisation` | `agent_id` | agent analytics payload | `500` |
+| `GET` | `/api/v1/analytics/runs/active` | `get_user_organisation` | none | active runs | `500` |
+| `GET` | `/api/v1/analytics/tools/used` | `get_user_organisation` | none | tool usage list | `500` |
+| `GET` | `/api/v1/analytics/tools/{tool_name}/usage` | `get_user_organisation` | `tool_name` | tool usage stats | `500` |
+| `GET` | `/api/v1/analytics/knowledge/{knowledge_name}/usage` | `get_user_organisation` | `knowledge_name` | knowledge usage stats | `500` |
+| `GET` | `/api/v1/analytics/tools/{tool_name}/logs` | `get_user_organisation` | `tool_name` | usage logs | `500` |
+| `GET` | `/api/v1/analytics/knowledge/{knowledge_name}/logs` | `get_user_organisation` | `knowledge_name` | usage logs | `500` |
+
+## Operational and Public Surface
+
+### `nexus/controllers/readiness.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/ready` | none | none | readiness checks and overall status | none explicit |
+| `GET` | `/api/v1/incantation` | none | none | runtime manifest and service URLs | none explicit |
+
+### `nexus/controllers/observatory.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/observatory` | none | none | env catalog plus live probes and health score | none explicit |
+
+### `nexus/controllers/orchestration.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/orchestration/weave` | AEGIS-governed | `WeaveRequest` | either `{status: "BLOCKED", reason, feeds}` or the swarm result | `500` |
+| `POST` | `/api/v1/orchestration/generate-blueprint` | AEGIS-governed | embedded `description` body | `{status: "SCRYED", blueprint}` | `500` |
+
+### `nexus/controllers/simulation.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/simulation/agents` | org scoped | none | simulated agent state dict | none explicit |
+| `GET` | `/api/v1/simulation/stream` | org scoped | none | SSE stream | none explicit |
+| `POST` | `/api/v1/simulation/ritual` | org scoped | `RitualRequest` | ritual dict | none explicit |
+| `POST` | `/api/v1/simulation/whisper` | org scoped | `WhisperRequest` | `{status: WHISPER_INGESTED, phi_alignment, impact}` | none explicit |
+
+### `nexus/controllers/skill.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/skills` | org scoped | none | list of skill dicts | none explicit |
+| `POST` | `/api/v1/skills` | org scoped | `SkillCreate` | `{status: "INGESTED", id}` | none explicit |
+| `DELETE` | `/api/v1/skills/{skill_id}` | org scoped | `skill_id` | `{status: "PURGED"}` | `404` `ARTIFACT_NOT_FOUND` |
+
+### `nexus/controllers/messaging.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/messaging/email` | none explicit | `EmailIn` | manifest_email result | `500` |
+| `GET` | `/api/v1/messaging/signals` | none explicit | none | message ledger | `500` |
+| `GET` | `/api/v1/messaging/signals/{message_id}` | none explicit | `message_id` | message detail | `404` |
+| `DELETE` | `/api/v1/messaging/signals/{message_id}` | none explicit | `message_id` | delete result | `500` |
+
+### `nexus/controllers/bedrock_db.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/bedrock/databases` | none explicit | none | database list | `500` |
+| `POST` | `/api/v1/bedrock/databases` | none explicit | `DatabaseIn` | database result | `500` |
+| `DELETE` | `/api/v1/bedrock/databases/{database_id}` | none explicit | `database_id` | delete result | `500` |
+| `GET` | `/api/v1/bedrock/databases/{database_id}/tables` | none explicit | `database_id` | table list | `500` |
+| `POST` | `/api/v1/bedrock/databases/{database_id}/tables` | none explicit | `TableIn` | table result | `500` |
+| `DELETE` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}` | none explicit | path parameters | delete result | `500` |
+| `GET` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/columns` | none explicit | path parameters | column list | `500` |
+| `POST` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/columns` | none explicit | `ColumnIn` | column result | `400` unsupported type, `500` |
+| `POST` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/relationships` | none explicit | `RelationshipIn` | relationship result | `500` |
+| `GET` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/rows` | none explicit | path parameters | row list | `500` |
+| `POST` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/rows` | none explicit | `RowIn` | row result | `500` |
+| `DELETE` | `/api/v1/bedrock/databases/{database_id}/tables/{table_id}/rows/{row_id}` | none explicit | path parameters | delete result | `500` |
+
+### `nexus/controllers/team_management.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `POST` | `/api/v1/teams/manifest` | none explicit | `TeamIn` | team creation result | none explicit |
+| `GET` | `/api/v1/teams/scry` | none explicit | none | team list | none explicit |
+| `GET` | `/api/v1/teams/scry/{team_id}` | none explicit | `team_id` | team details | `404` |
+| `PATCH` | `/api/v1/teams/recalibrate/{team_id}` | none explicit | `TeamUpdateIn` | update result | none explicit |
+| `DELETE` | `/api/v1/teams/purge/{team_id}` | none explicit | `team_id` | `{status: "PURGED"}` | none explicit |
+| `POST` | `/api/v1/teams/invite` | none explicit | `MembershipIn` | invitation result | none explicit |
+| `GET` | `/api/v1/teams/memberships/{team_id}` | none explicit | `team_id` | membership list | none explicit |
+| `PATCH` | `/api/v1/teams/memberships/{team_id}/{membership_id}/roles` | none explicit | `RolesUpdateIn` | role update result | none explicit |
+| `DELETE` | `/api/v1/teams/memberships/{team_id}/{membership_id}` | none explicit | path parameters | purge result | none explicit |
+| `POST` | `/api/v1/teams/redeem/{team_id}` | none explicit | `RedemptionIn` | redemption result | none explicit |
+
+### `nexus/controllers/user_management.py`
+
+| Method | Path | Auth | Request | Response | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- |
+| `GET` | `/api/v1/management/architects` | none explicit | none | list of architects | none explicit |
+| `POST` | `/api/v1/management/architects` | none explicit | `UserCreateIn` | created architect result | none explicit |
+| `GET` | `/api/v1/management/architects/{user_id}` | none explicit | `user_id` | architect details | `404` |
+| `PATCH` | `/api/v1/management/architects/{user_id}/name` | none explicit | name payload | update result | none explicit |
+| `PATCH` | `/api/v1/management/architects/{user_id}/email` | none explicit | email payload | update result | none explicit |
+| `PATCH` | `/api/v1/management/architects/{user_id}/password` | none explicit | password payload | update result | none explicit |
+| `GET` | `/api/v1/management/architects/{user_id}/logs` | none explicit | `user_id` | user logs | `404` |
+| `GET` | `/api/v1/management/architects/{user_id}/sessions` | none explicit | `user_id` | session list | `404` |
+| `DELETE` | `/api/v1/management/architects/{user_id}/sessions/{session_id}` | none explicit | path parameters | delete result | `404` |
+| `DELETE` | `/api/v1/management/architects/{user_id}/sessions` | none explicit | `user_id` | purge result | none explicit |
+| `DELETE` | `/api/v1/management/architects/{user_id}` | none explicit | `user_id` | delete result | none explicit |
+| `POST` | `/api/v1/management/architects/{user_id}/labels` | none explicit | `LabelsIn` | label result | none explicit |
+| `PATCH` | `/api/v1/management/architects/{user_id}/status` | none explicit | `StatusIn` | status result | none explicit |
+| `GET` | `/api/v1/management/architects/{user_id}/prefs` | none explicit | `user_id` | preferences payload | none explicit |
+| `PATCH` | `/api/v1/management/architects/{user_id}/prefs` | none explicit | `PrefsUpdateIn` | preference update result | none explicit |
+
+## Notes on Response Shapes
+
+- When a controller declares a `response_model`, that model is the contract of record.
+- When no `response_model` is present, the endpoint usually returns an ORM object, a helper dict, or a list of plain dicts.
+- Several Appwrite-backed routes return server-side admin payloads directly instead of a normalized application schema.
+
+## Source of Truth
+
+The backend route registry lives in `nexus/router_registry.py`. The router inventory in this page is derived from the mounted controller files and the app-level routes in `nexus/app_factory.py`.
